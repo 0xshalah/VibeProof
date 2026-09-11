@@ -1,472 +1,488 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Shield,
-  Sparkles,
-  ExternalLink,
-  Code2,
-  CheckCircle2,
-  AlertTriangle,
-  FileCode,
-  Copy,
-  Check,
-  Globe,
-  Terminal,
-} from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
-import { EditorSection } from './components/EditorSection';
-import { AuditResultCard } from './components/AuditResultCard';
-import { CertificateModal } from './components/CertificateModal';
+import { Hero } from './components/Hero';
+import { SolidityEditor } from './components/SolidityEditor';
+import { AuditReport } from './components/AuditReport';
 import { RecentAudits } from './components/RecentAudits';
-import { SAMPLE_CONTRACTS } from './data/sampleContracts';
-import { runSecurityAudit } from './services/auditEngine';
+import { ReferenceCard } from './components/ReferenceCard';
+import { CertificateModal } from './components/CertificateModal';
+import { ToastContainer } from './components/ToastContainer';
+import { Footer } from './components/Footer';
+import { Dashboard } from './components/dashboard/Dashboard';
+
+import { PRESETS, LIVE_FEED, SCAN_STEPS } from './data/sampleContracts';
 import {
-  connectWallet,
-  switchToBotChain,
-  certifyAuditOnChain,
-  hasEthereumWallet,
+  computeKeccak256,
+  auditSolidityCode,
+  shortHash
+} from './services/auditEngine';
+import {
+  hasMetaMask,
+  requestWalletConnection,
+  addOrSwitchBotChain,
+  broadcastCertificationOnChain
 } from './services/web3Service';
 import {
-  AuditResult,
-  CertifiedOnChainRecord,
-  WalletState,
+  AuditReportData,
+  AuditFeedItem,
+  CertifiedAuditData,
+  ToastMessage,
+  WalletAccount
 } from './types';
-import {
-  BOT_CHAIN_TESTNET,
-  BOT_CHAIN_MAINNET,
-  SUPPORTED_NETWORKS,
-} from './config/botchain';
 
 export default function App() {
-  // Application State
-  const [selectedChainId, setSelectedChainId] = useState<number>(968);
-  const [code, setCode] = useState<string>(SAMPLE_CONTRACTS[0].code);
-  const [projectName, setProjectName] = useState<string>(SAMPLE_CONTRACTS[0].title);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
-
-  // Web3 State
-  const [wallet, setWallet] = useState<WalletState>({
-    isConnected: false,
-    address: null,
-    chainId: null,
-    botBalance: null,
-    isConnecting: false,
-    error: null,
+  // App view mode: 'dashboard' (MOCKUP-DASHBOARD.html) or 'studio' (MOCKUP.html)
+  const [appMode, setAppMode] = useState<'dashboard' | 'studio'>(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('studio')) {
+      return 'studio';
+    }
+    return 'dashboard';
   });
 
-  // Certification State
-  const [isCertifying, setIsCertifying] = useState<boolean>(false);
-  const [certifiedRecord, setCertifiedRecord] = useState<CertifiedOnChainRecord | null>(null);
-  const [showCertModal, setShowCertModal] = useState<boolean>(false);
-  const [recentAudits, setRecentAudits] = useState<CertifiedOnChainRecord[]>([
-    {
-      codeHash: '0x8f3a9e8b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f',
-      projectName: 'CertifiedSafeVault.sol',
-      securityScore: 96,
-      verdict: 'SAFE',
-      reportSummary: 'Contract passed security analysis with an impressive score of 96/100.',
-      auditorWallet: '0x38bF32D15779E102e3532C66981881775f0a20a4',
-      timestamp: Math.floor(Date.now() / 1000) - 3600,
-      txHash: '0x4a7e918230b53d9e847c21f048d390a84e27f09320875dfa349b8092809e6c41',
-      chainId: 968,
-      blockExplorerUrl: 'https://scan.bohr.life/tx/0x4a7e918230b53d9e847c21f048d390a84e27f09320875dfa349b8092809e6c41',
-    },
-    {
-      codeHash: '0x1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f8f3a9e8b',
-      projectName: 'CommunityToken.sol',
-      securityScore: 74,
-      verdict: 'WARNING',
-      reportSummary: 'Contract has notable security warnings (Score 74/100).',
-      auditorWallet: '0x71C568Ba3E921C2607875951d683a3C583Bcf869',
-      timestamp: Math.floor(Date.now() / 1000) - 7200,
-      txHash: '0x9b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f8f3a9e8b1c2d3e4f5a6b7c8d9e0f1a',
-      chainId: 968,
-      blockExplorerUrl: 'https://scan.bohr.life/tx/0x9b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f8f3a9e8b1c2d3e4f5a6b7c8d9e0f1a',
-    },
-  ]);
+  // Scroll progress bar state
+  const [scrollPct, setScrollPct] = useState<number>(0);
 
-  const [copiedSolidity, setCopiedSolidity] = useState<boolean>(false);
-
-  // Auto-scan initial sample on mount so judge sees results instantly
   useEffect(() => {
-    handleRunAudit();
+    const handleScroll = () => {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
+      setScrollPct(pct);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Listen to MetaMask account/chain changes
+  // Network selection ('testnet' (968) or 'mainnet' (677))
+  const [currentNetwork, setCurrentNetwork] = useState<'testnet' | 'mainnet'>('testnet');
+
+  // Contract & Editor state
+  const [activePreset, setActivePreset] = useState<'vulnerable' | 'registry' | 'safe' | null>('vulnerable');
+  const [fileName, setFileName] = useState<string>(PRESETS.vulnerable.file);
+  const [code, setCode] = useState<string>(PRESETS.vulnerable.code);
+  const [hasCopiedHash, setHasCopiedHash] = useState<boolean>(false);
+
+  // Deterministic Keccak-256 code hash
+  const codeHash = useMemo(() => computeKeccak256(code), [code]);
+
+  // Audit Report state
+  const [phase, setPhase] = useState<'idle' | 'scanning' | 'result'>('result');
+  const [report, setReport] = useState<AuditReportData | null>(PRESETS.vulnerable.result);
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [scanProgress, setScanProgress] = useState<number>(0);
+  const [scanStepIndex, setScanStepIndex] = useState<number>(0);
+
+  // Live Audits Feed state
+  const [feed, setFeed] = useState<AuditFeedItem[]>(LIVE_FEED);
+
+  // Web3 Wallet state
+  const [wallet, setWallet] = useState<WalletAccount | null>(null);
+  const [isConnectingWallet, setIsConnectingWallet] = useState<boolean>(false);
+
+  // Certification state
+  const [isCertifying, setIsCertifying] = useState<boolean>(false);
+  const [certifyStepText, setCertifyStepText] = useState<string>('');
+  const [hasCertified, setHasCertified] = useState<boolean>(false);
+  const [certifiedData, setCertifiedData] = useState<CertifiedAuditData | null>(null);
+  const [isCertModalOpen, setIsCertModalOpen] = useState<boolean>(false);
+
+  // Toast notifications state
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const addToast = useCallback((message: string, type: 'cyber' | 'safe' | 'warn' | 'crit' = 'cyber') => {
+    const id = Date.now().toString() + Math.random().toString(36).substring(2, 6);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3800);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // Listen to MetaMask account / chain changes
   useEffect(() => {
     if (typeof window !== 'undefined' && window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
+      const onAccountsChanged = (accounts: string[]) => {
         if (accounts.length === 0) {
-          setWallet((prev) => ({ ...prev, isConnected: false, address: null, botBalance: null }));
+          setWallet(null);
+          addToast('MetaMask terputus.', 'warn');
         } else {
-          setWallet((prev) => ({ ...prev, isConnected: true, address: accounts[0] }));
+          setWallet((prev) => (prev ? { ...prev, address: accounts[0] } : null));
         }
       };
 
-      const handleChainChanged = (hexChainId: string) => {
-        const id = parseInt(hexChainId, 16);
-        setWallet((prev) => ({ ...prev, chainId: id }));
-        if (id === 968 || id === 677) {
-          setSelectedChainId(id);
-        }
+      const onChainChanged = (hexChain: string) => {
+        const chainId = parseInt(hexChain, 16);
+        if (chainId === 968) setCurrentNetwork('testnet');
+        if (chainId === 677) setCurrentNetwork('mainnet');
       };
 
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
+      window.ethereum.on?.('accountsChanged', onAccountsChanged);
+      window.ethereum.on?.('chainChanged', onChainChanged);
 
       return () => {
-        window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum?.removeListener('chainChanged', handleChainChanged);
+        window.ethereum.removeListener?.('accountsChanged', onAccountsChanged);
+        window.ethereum.removeListener?.('chainChanged', onChainChanged);
       };
     }
-  }, []);
+  }, [addToast]);
 
-  const handleConnectWallet = async () => {
-    setWallet((prev) => ({ ...prev, isConnecting: true, error: null }));
-    try {
-      const info = await connectWallet();
-      setWallet({
-        isConnected: true,
-        address: info.address,
-        chainId: info.chainId,
-        botBalance: info.botBalance,
-        isConnecting: false,
-        error: null,
-      });
-      if (info.chainId === 968 || info.chainId === 677) {
-        setSelectedChainId(info.chainId);
-      }
-    } catch (err: any) {
-      setWallet((prev) => ({
-        ...prev,
-        isConnecting: false,
-        error: err.message || 'Failed to connect wallet.',
-      }));
-    }
-  };
+  // Preset Selection handler
+  const handleSelectPreset = useCallback(
+    (key: 'vulnerable' | 'registry' | 'safe') => {
+      const p = PRESETS[key];
+      setActivePreset(key);
+      setFileName(p.file);
+      setCode(p.code);
+      setReport(p.result);
+      setPhase('result');
+      setHasCertified(false);
+      setCertifiedData(null);
+      addToast(`Preset ${p.file} dimuat.`, 'cyber');
+    },
+    [addToast]
+  );
 
-  const handleSelectChain = async (chainId: number) => {
-    setSelectedChainId(chainId);
-    if (wallet.isConnected && wallet.chainId !== chainId) {
-      try {
-        await switchToBotChain(chainId === 968);
-        setWallet((prev) => ({ ...prev, chainId }));
-      } catch (err: any) {
-        console.warn('Network switch rejected:', err.message);
-      }
-    }
-  };
+  // Copy Code Hash
+  const handleCopyCodeHash = useCallback(() => {
+    navigator.clipboard.writeText(codeHash);
+    setHasCopiedHash(true);
+    addToast('Keccak-256 hash disalin ke clipboard!', 'cyber');
+    setTimeout(() => setHasCopiedHash(false), 2000);
+  }, [codeHash, addToast]);
 
-  const handleRunAudit = async () => {
-    if (!code.trim()) return;
+  // Run AI Scan with progress animation
+  const handleRunScan = useCallback(async () => {
+    if (!code.trim() || isScanning) return;
+
     setIsScanning(true);
-    try {
-      const result = await runSecurityAudit(code, projectName);
-      setAuditResult(result);
-    } catch (err) {
-      console.error('Audit failed:', err);
-    } finally {
-      setIsScanning(false);
+    setPhase('scanning');
+    setScanProgress(0);
+    setScanStepIndex(0);
+    setHasCertified(false);
+    setCertifiedData(null);
+
+    const stepCount = SCAN_STEPS.length;
+    const stepDuration = 320; // 320ms per step
+
+    for (let i = 0; i < stepCount; i++) {
+      setScanStepIndex(i);
+      setScanProgress(Math.round(((i + 1) / stepCount) * 100));
+      await new Promise((res) => setTimeout(res, stepDuration));
     }
-  };
 
-  const handleCertify = async () => {
-    if (!auditResult) return;
+    const calculatedReport = auditSolidityCode(code);
+    setReport(calculatedReport);
+    setIsScanning(false);
+    setPhase('result');
+    addToast(`Scan selesai! Security Score: ${calculatedReport.score}/100.`, calculatedReport.score >= 80 ? 'safe' : calculatedReport.score >= 50 ? 'warn' : 'crit');
+  }, [code, isScanning, addToast]);
+
+  // Keyboard shortcut Ctrl+Enter or Cmd+Enter to run scan
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleRunScan();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleRunScan]);
+
+  // Wallet Connection
+  const handleConnectWallet = useCallback(async () => {
+    setIsConnectingWallet(true);
+    try {
+      if (hasMetaMask()) {
+        const info = await requestWalletConnection(currentNetwork);
+        setWallet({
+          address: info.address,
+          balance: info.balance,
+          isRealMetaMask: true
+        });
+        addToast(`MetaMask terhubung: ${info.address.slice(0, 6)}…${info.address.slice(-4)}`, 'safe');
+      } else {
+        // High fidelity demo wallet simulation
+        await new Promise((res) => setTimeout(res, 500));
+        const demoAddr = '0x38bF32D15779E102e3532C66981881775f0a20a4';
+        setWallet({
+          address: demoAddr,
+          balance: '12.45',
+          isRealMetaMask: false
+        });
+        addToast('MetaMask simulation: 0x38bF…20a4 terhubung (12.45 BOT).', 'safe');
+      }
+    } catch (err: any) {
+      addToast(err.message || 'Gagal menghubungkan wallet', 'crit');
+    } finally {
+      setIsConnectingWallet(false);
+    }
+  }, [currentNetwork, addToast]);
+
+  // Network Switcher
+  const handleSelectNetwork = useCallback(
+    async (net: 'testnet' | 'mainnet') => {
+      setCurrentNetwork(net);
+      if (wallet?.isRealMetaMask) {
+        try {
+          await addOrSwitchBotChain(net);
+          addToast(`Beralih ke BOT Chain ${net.toUpperCase()}.`, 'safe');
+        } catch (err: any) {
+          console.warn('Switch network error:', err);
+        }
+      } else {
+        addToast(`Jaringan aktif: BOT Chain ${net.toUpperCase()} (${net === 'testnet' ? '968' : '677'}).`, 'cyber');
+      }
+    },
+    [wallet, addToast]
+  );
+
+  // Certify on BOT Chain
+  const handleCertify = useCallback(async () => {
+    if (!report || isCertifying) return;
+
     setIsCertifying(true);
+    const activeWalletAddr = wallet?.address || '0x38bF32D15779E102e3532C66981881775f0a20a4';
 
     try {
-      let record: CertifiedOnChainRecord;
+      const proof = await broadcastCertificationOnChain({
+        contractName: fileName,
+        codeHash,
+        score: report.score,
+        verdict: report.verdict,
+        walletAddress: activeWalletAddr,
+        networkKey: currentNetwork,
+        onStep: (text) => setCertifyStepText(text)
+      });
 
-      if (hasEthereumWallet() && wallet.isConnected) {
-        // Real on-chain broadcast via MetaMask to BOT Chain
-        record = await certifyAuditOnChain(auditResult, selectedChainId);
-      } else {
-        // Graceful simulated broadcast for visitors/judges testing without MetaMask
-        const network = SUPPORTED_NETWORKS[selectedChainId] || BOT_CHAIN_TESTNET;
-        const mockTx = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-        const mockWallet = wallet.address || '0x38bF32D15779E102e3532C66981881775f0a20a4';
+      const cert: CertifiedAuditData = {
+        fileName,
+        score: report.score,
+        verdict: report.verdict,
+        codeHash,
+        walletAddress: activeWalletAddr,
+        txHash: proof.tx,
+        blockNumber: proof.block,
+        timestamp: proof.time,
+        network: currentNetwork
+      };
 
-        await new Promise((res) => setTimeout(res, 1200));
+      setCertifiedData(cert);
+      setHasCertified(true);
+      setIsCertModalOpen(true);
 
-        record = {
-          codeHash: auditResult.codeHash,
-          projectName: auditResult.projectName,
-          securityScore: auditResult.securityScore,
-          verdict: auditResult.verdict,
-          reportSummary: auditResult.summary,
-          auditorWallet: mockWallet,
-          timestamp: Math.floor(Date.now() / 1000),
-          txHash: mockTx,
-          chainId: selectedChainId,
-          blockExplorerUrl: `${network.explorerUrl}/tx/${mockTx}`,
-        };
-      }
+      // Prepend to live audits feed
+      setFeed((prev) => [
+        {
+          name: fileName,
+          who: shortHash(activeWalletAddr, 6, 4),
+          score: report.score,
+          tx: shortHash(proof.tx, 6, 4),
+          net: currentNetwork,
+          ago: 'Just now'
+        },
+        ...prev
+      ]);
 
-      setCertifiedRecord(record);
-      setRecentAudits((prev) => [record, ...prev.slice(0, 5)]);
-      setShowCertModal(true);
+      addToast('Attestation tersimpan di BOT Chain!', 'safe');
     } catch (err: any) {
-      alert(`Certification notice: ${err.message}`);
+      addToast(`Gagal mencatat audit: ${err.message}`, 'crit');
     } finally {
       setIsCertifying(false);
+      setCertifyStepText('');
     }
-  };
+  }, [report, isCertifying, wallet, fileName, codeHash, currentNetwork, addToast]);
 
-  const handleCopyContractSource = () => {
-    const contractCode = `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+  // Preview State switcher for Evaluator & Judge demonstration
+  const handlePreviewStateChange = useCallback(
+    (stateKey: 'idle' | 'scanning' | 'safe' | 'warning' | 'critical') => {
+      if (stateKey === 'idle') {
+        setPhase('idle');
+        setHasCertified(false);
+        addToast('Preview state: IDLE', 'cyber');
+      } else if (stateKey === 'scanning') {
+        handleRunScan();
+      } else if (stateKey === 'safe') {
+        handleSelectPreset('safe');
+      } else if (stateKey === 'warning') {
+        handleSelectPreset('registry');
+      } else if (stateKey === 'critical') {
+        handleSelectPreset('vulnerable');
+      }
+    },
+    [handleRunScan, handleSelectPreset, addToast]
+  );
 
-contract VibeProof {
-    struct AuditRecord {
-        bytes32 codeHash;
-        string projectName;
-        uint8 securityScore;
-        string auditVerdict;
-        string reportSummary;
-        address auditorWallet;
-        uint256 timestamp;
-        bool exists;
+  // Copy Contract Source from Reference Card
+  const handleCopyContractSource = useCallback(() => {
+    navigator.clipboard.writeText(code);
+    addToast('Solidity contract source disalin!', 'cyber');
+  }, [code, addToast]);
+
+  // Add BOT Chain to MetaMask from Reference Card
+  const handleAddChainToWallet = useCallback(async () => {
+    if (hasMetaMask()) {
+      try {
+        await addOrSwitchBotChain(currentNetwork);
+        addToast(`BOT Chain ${currentNetwork.toUpperCase()} ditambahkan ke MetaMask!`, 'safe');
+      } catch (err: any) {
+        addToast(`Gagal menambahkan chain: ${err.message}`, 'crit');
+      }
+    } else {
+      addToast(
+        `Parameter BOT Chain ${currentNetwork.toUpperCase()} siap (RPC: ${
+          currentNetwork === 'testnet' ? 'https://testnet-rpc.botchain.ai' : 'https://rpc.botchain.ai'
+        }).`,
+        'cyber'
+      );
     }
+  }, [currentNetwork, addToast]);
 
-    mapping(bytes32 => AuditRecord) public audits;
-    bytes32[] public auditHashes;
-
-    event AuditIssued(bytes32 indexed codeHash, string projectName, uint8 securityScore, string auditVerdict, address indexed auditorWallet, uint256 timestamp);
-
-    function certifyAudit(bytes32 _codeHash, string memory _projectName, uint8 _securityScore, string memory _verdict, string memory _reportSummary) external {
-        require(_codeHash != bytes32(0), "Invalid code hash");
-        require(_securityScore <= 100, "Score must be 0-100");
-        if (!audits[_codeHash].exists) {
-            auditHashes.push(_codeHash);
-        }
-        audits[_codeHash] = AuditRecord(_codeHash, _projectName, _securityScore, _verdict, _reportSummary, msg.sender, block.timestamp, true);
-        emit AuditIssued(_codeHash, _projectName, _securityScore, _verdict, msg.sender, block.timestamp);
-    }
-
-    function getAudit(bytes32 _codeHash) external view returns (AuditRecord memory) {
-        return audits[_codeHash];
-    }
-}`;
-    navigator.clipboard.writeText(contractCode);
-    setCopiedSolidity(true);
-    setTimeout(() => setCopiedSolidity(false), 2000);
-  };
-
-  return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-cyan-500 selection:text-black">
-      {/* Top Navigation */}
-      <Navbar
+  if (appMode === 'dashboard') {
+    return (
+      <Dashboard
+        onOpenAuditStudio={() => setAppMode('studio')}
         wallet={wallet}
-        selectedChainId={selectedChainId}
-        onSelectChain={handleSelectChain}
         onConnectWallet={handleConnectWallet}
       />
+    );
+  }
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  return (
+    <div id="top" className="bg-ink-900 text-zinc-300 font-sans antialiased min-h-screen selection:bg-cyber/25 selection:text-[#e4feff]">
+      {/* Scroll Progress Bar */}
+      <div
+        id="scrollProgress"
+        style={{ width: `${scrollPct}%` }}
+        className="fixed top-0 left-0 h-[2px] z-[60] bg-gradient-to-r from-cyber via-cyber-600 to-safe"
+      ></div>
+
+      {/* Navigation Header */}
+      <Navbar
+        currentNetwork={currentNetwork}
+        onSelectNetwork={handleSelectNetwork}
+        wallet={wallet}
+        isConnectingWallet={isConnectingWallet}
+        onConnectWallet={handleConnectWallet}
+        onOpenDashboard={() => setAppMode('dashboard')}
+      />
+
+      {/* Main Sections */}
+      <main>
         {/* Hero Section */}
-        <section className="relative p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-zinc-900 via-zinc-900/60 to-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative max-w-3xl space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Girl Meets Tech × Build Week Hackathon Vol.2</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Audit in Seconds. Certify on <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">BOT Chain</span>.
-            </h1>
-
-            <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
-              VibeProof equips vibe-coders and Web3 builders with an instant AI security auditor. Detect reentrancy, access control leaks, and gas bottlenecks—then record a verifiable cryptographic audit badge directly on BOT Chain.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-zinc-400">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Zero Setup Required</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>EVM Compatible (Chain ID 968 & 677)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Immutable Proof of Audit</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Primary Interactive Workspace: Editor (Left) & Results (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Code Editor */}
-          <div className="lg:col-span-7 h-full min-h-[580px]">
-            <EditorSection
-              code={code}
-              projectName={projectName}
-              isScanning={isScanning}
-              onCodeChange={setCode}
-              onProjectNameChange={setProjectName}
-              onRunAudit={handleRunAudit}
-            />
-          </div>
-
-          {/* Right Column: Audit Results Card */}
-          <div className="lg:col-span-5 h-full">
-            {auditResult ? (
-              <AuditResultCard
-                audit={auditResult}
-                isCertifying={isCertifying}
-                onCertify={handleCertify}
-                hasCertified={Boolean(certifiedRecord)}
-              />
-            ) : (
-              <div className="h-full min-h-[580px] rounded-2xl bg-zinc-900/40 border border-zinc-800 p-8 flex flex-col items-center justify-center text-center">
-                <Shield className="w-12 h-12 text-zinc-600 mb-3 animate-pulse" />
-                <h3 className="text-base font-semibold text-zinc-300">No Active Audit Scan</h3>
-                <p className="text-xs text-zinc-500 max-w-xs mt-1">
-                  Click &ldquo;Scan with AI Auditor&rdquo; or pick a sample preset to generate real-time vulnerability analysis.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Certified Audits Feed */}
-        <RecentAudits
-          records={recentAudits}
-          onSelectRecord={(rec) => {
-            setCertifiedRecord(rec);
-            setShowCertModal(true);
+        <Hero
+          onStartScanClick={() => {
+            const el = document.getElementById('workspace');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }}
+          onViewProofsClick={() => {
+            setAppMode('dashboard');
           }}
         />
 
-        {/* Developer Kit & Remix Deployment Guide */}
-        <section className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+        {/* Core Workspace Section */}
+        <section id="workspace" className="relative max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+          <div className="flex items-end justify-between gap-4 mb-6">
             <div>
-              <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-cyan-400" />
-                <h3 className="font-bold text-sm text-white">
-                  Developer & Judge Kit: VibeProof.sol
-                </h3>
-              </div>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Ready for one-click compilation and deployment in Remix IDE on BOT Chain.
+              <p className="chip text-[11px] font-bold tracking-[0.25em] uppercase text-cyber">
+                Core Workspace
               </p>
+              <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Interactive Audit Studio
+              </h2>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleCopyContractSource}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors"
-              >
-                {copiedSolidity ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy Contract Code</span>
-                  </>
-                )}
-              </button>
-
-              <a
-                href="https://remix.ethereum.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition-colors"
-              >
-                <span>Open Remix IDE</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
+            <span className="chip hidden sm:inline-flex items-center gap-2 h-8 px-3 rounded-full border border-zinc-800 bg-ink-800 text-[11px] font-mono text-zinc-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyber dot-live"></span> engine v2.3 · solc 0.8.24
+            </span>
           </div>
 
-          {/* Quick Network Reference Table */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-            <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
-              <span className="text-[10px] uppercase font-mono text-zinc-500 block">Testnet Chain ID</span>
-              <span className="font-mono font-semibold text-cyan-400 text-sm">968</span>
-              <span className="text-[10px] text-zinc-500 block">RPC: rpc.bohr.life</span>
-            </div>
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
+            {/* Left: Solidity Editor */}
+            <SolidityEditor
+              code={code}
+              onCodeChange={(newVal) => {
+                setCode(newVal);
+                setActivePreset(null);
+              }}
+              fileName={fileName}
+              onFileNameChange={setFileName}
+              activePreset={activePreset}
+              onSelectPreset={handleSelectPreset}
+              isScanning={isScanning}
+              onRunScan={handleRunScan}
+              codeHash={codeHash}
+              onCopyHash={handleCopyCodeHash}
+              hasCopiedHash={hasCopiedHash}
+            />
 
-            <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
-              <span className="text-[10px] uppercase font-mono text-zinc-500 block">Mainnet Chain ID</span>
-              <span className="font-mono font-semibold text-emerald-400 text-sm">677</span>
-              <span className="text-[10px] text-zinc-500 block">RPC: rpc.botchain.ai</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
-              <span className="text-[10px] uppercase font-mono text-zinc-500 block">Currency</span>
-              <span className="font-mono font-semibold text-white text-sm">BOT</span>
-              <span className="text-[10px] text-zinc-500 block">Native Gas Token</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80">
-              <span className="text-[10px] uppercase font-mono text-zinc-500 block">Testnet Faucet</span>
-              <a
-                href="https://faucet.botchain.ai/basic"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-amber-400 hover:underline text-sm flex items-center gap-1"
-              >
-                Claim Free BOT
-                <ExternalLink className="w-3 h-3" />
-              </a>
-              <span className="text-[10px] text-zinc-500 block">instant test gas</span>
-            </div>
+            {/* Right: Audit Report */}
+            <AuditReport
+              phase={phase}
+              report={report}
+              fileName={fileName}
+              codeHash={codeHash}
+              scanProgress={scanProgress}
+              scanStepIndex={scanStepIndex}
+              onRunDemoScan={handleRunScan}
+              onPreviewStateChange={handlePreviewStateChange}
+              onCertifyClick={handleCertify}
+              isCertifying={isCertifying}
+              certifyStepText={certifyStepText}
+              hasCertified={hasCertified}
+              onViewCertProof={() => setIsCertModalOpen(true)}
+            />
           </div>
         </section>
+
+        {/* Recent Certified Audits Live Feed */}
+        <RecentAudits
+          audits={feed}
+          onSelectAudit={(item) => {
+            setCertifiedData({
+              fileName: item.name,
+              score: item.score,
+              verdict: item.score >= 80 ? 'PASSED — SAFE' : item.score >= 50 ? 'WARNINGS DETECTED' : 'CRITICAL RISK',
+              codeHash: '0x8f3a9e1204859123847190283471902834719028347190283471902834719028',
+              walletAddress: item.who,
+              txHash: item.tx,
+              blockNumber: 4210928,
+              timestamp: '2025-05-18 12:00:00 UTC',
+              network: item.net
+            });
+            setIsCertModalOpen(true);
+          }}
+        />
+
+        {/* Developer & Judge Reference Card */}
+        <ReferenceCard
+          onCopyContractSource={handleCopyContractSource}
+          onAddChainToWallet={handleAddChainToWallet}
+          onCopyValue={(val, label) => {
+            navigator.clipboard.writeText(val);
+            addToast(`${label} disalin ke clipboard!`, 'cyber');
+          }}
+        />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800/80 bg-zinc-950 py-6 text-center text-xs text-zinc-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>© 2026 VibeProof · Built for Girl Meets Tech Build Week Hackathon Vol.2</p>
-          <div className="flex items-center gap-4">
-            <a
-              href="https://scan.bohr.life"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-zinc-300 transition-colors"
-            >
-              BOTScan (Testnet)
-            </a>
-            <a
-              href="https://scan.botchain.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-zinc-300 transition-colors"
-            >
-              BOTScan (Mainnet)
-            </a>
-            <a
-              href="https://t.me/+s7_5oMxQWRtlNjQ1"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-zinc-300 transition-colors"
-            >
-              Telegram Community
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
-      {/* Certificate Modal */}
-      {certifiedRecord && (
-        <CertificateModal
-          record={certifiedRecord}
-          isOpen={showCertModal}
-          onClose={() => setShowCertModal(false)}
-        />
-      )}
+      {/* On-Chain Certificate Modal */}
+      <CertificateModal
+        isOpen={isCertModalOpen}
+        onClose={() => setIsCertModalOpen(false)}
+        data={certifiedData}
+        onCopyBadge={() => {
+          addToast('Embed badge disalin ke clipboard!', 'cyber');
+        }}
+      />
+
+      {/* Toast Notification Container */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

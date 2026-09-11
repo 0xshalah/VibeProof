@@ -21,6 +21,11 @@ export const BOT_CHAIN_MAINNET: NetworkConfig = {
   isTestnet: false,
 };
 
+export const BOTCHAIN_NETWORKS: Record<'testnet' | 'mainnet', NetworkConfig> = {
+  testnet: BOT_CHAIN_TESTNET,
+  mainnet: BOT_CHAIN_MAINNET,
+};
+
 export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> = {
   968: BOT_CHAIN_TESTNET,
   677: BOT_CHAIN_MAINNET,

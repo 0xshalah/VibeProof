@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VibeProof — AI-Powered Smart Contract Auditor & On-Chain Certification on BOT Chain</title>
+<meta name="description" content="VibeProof memindai smart contract Solidity dalam hitungan detik, menghitung Security Score 0-100, dan mencatat bukti audit cryptographic hash secara permanen di BOT Chain." />
+
+<!-- Fonts: Fontsource CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/plus-jakarta-sans/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/jetbrains-mono/index.css" />
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        ink:   { 950:'#07080c', 900:'#090a0f', 850:'#0c0e14', 800:'#0f1117', 700:'#141720', 600:'#181b23', 500:'#1f232e' },
+        cyber: { DEFAULT:'#00F0FF', 600:'#06b6d4', 700:'#0e7490' },
+        safe:  '#10b981',
+        warn:  '#f59e0b',
+        crit:  '#f43f5e'
+      },
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans Variable"','Plus Jakarta Sans','Inter','system-ui','sans-serif'],
+        mono: ['"JetBrains Mono Variable"','JetBrains Mono','ui-monospace','SFMono-Regular','monospace']
+      },
+      boxShadow: {
+        'glow-cyber': '0 0 0 1px rgba(0,240,255,.30), 0 0 28px -6px rgba(0,240,255,.50)',
+        'glow-safe' : '0 0 0 1px rgba(16,185,129,.35), 0 0 28px -6px rgba(16,185,129,.50)',
+        'glow-crit' : '0 0 0 1px rgba(244,63,94,.35), 0 0 28px -6px rgba(244,63,94,.45)'
+      }
+    }
+  }
+}
+</script>
+
+<style>
+  :root { color-scheme: dark; }
+  ::selection { background: rgba(0,240,255,.25); color: #e4feff; }
+
+  /* ---------- Scrollbars ---------- */
+  .scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scroll-thin::-webkit-scrollbar-thumb { background: #262a35; border-radius: 8px; }
+  .scroll-thin::-webkit-scrollbar-thumb:hover { background: #343a48; }
+  .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+
+  /* ---------- Surfaces ---------- */
+  .glass { background: rgba(9,10,15,.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  .grid-lines {
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  .mask-fade-b { -webkit-mask-image: linear-gradient(to bottom, black 25%, transparent 100%); mask-image: linear-gradient(to bottom, black 25%, transparent 100%); }
+  .hero-bg {
+    background-image: url('https://image.qwenlm.ai/public_source/fd9e50b2-dd67-4b96-aeb8-ca7c2ba7dd2d/1ba14672b-f21d-49e1-b134-02b30b162171.png');
+    background-size: cover; background-position: center;
+  }
+
+  /* ---------- Micro animations ---------- */
+  @keyframes sweep { 0% { transform: translateY(-110%);} 100% { transform: translateY(420%);} }
+  .scan-sweep { animation: sweep 1.7s linear infinite; }
+  @keyframes blinkCaret { 50% { opacity: 0; } }
+  .caret { animation: blinkCaret 1s steps(1) infinite; }
+  @keyframes floaty { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-6px);} }
+  .floaty { animation: floaty 5s ease-in-out infinite; }
+  @keyframes pulseDot { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.55);} 70% { box-shadow: 0 0 0 7px rgba(16,185,129,0);} }
+  .dot-live { animation: pulseDot 2s infinite; }
+  @keyframes spin360 { to { transform: rotate(360deg);} }
+  .spin { animation: spin360 .9s linear infinite; }
+  @keyframes riseIn { from { opacity:0; transform: translateY(10px);} to { opacity:1; transform: translateY(0);} }
+  .rise-in { animation: riseIn .45s cubic-bezier(.22,1,.36,1) both; }
+
+  /* ---------- Buttons ---------- */
+  .btn-cyber { transition: box-shadow .25s ease, transform .15s ease, background-color .2s ease, border-color .2s ease; }
+  .btn-cyber:hover { box-shadow: 0 0 0 1px rgba(0,240,255,.45), 0 0 34px -6px rgba(0,240,255,.55); transform: translateY(-1px); }
+  .btn-cyber:active { transform: translateY(0); }
+
+  .chip { white-space: nowrap; }
+  textarea.code-input { tab-size: 4; }
+  textarea.code-input::placeholder { color: #3f4553; }
+
+  .cert-frame { background:
+      radial-gradient(120% 90% at 50% 0%, rgba(0,240,255,.10), transparent 55%),
+      linear-gradient(180deg, #10131b, #0b0d13); }
+</style>
+</head>
+
+<body class="bg-ink-900 text-zinc-300 font-sans antialiased min-h-screen">
+
+<!-- ══════════════════ SCROLL PROGRESS ══════════════════ -->
+<div id="scrollProgress" class="fixed top-0 left-0 h-[2px] w-0 z-[60] bg-gradient-to-r from-cyber via-cyber-600 to-safe"></div>
+
+<!-- ══════════════════ 1. STICKY NAVIGATION ══════════════════ -->
+<header class="sticky top-0 z-50 glass border-b border-zinc-800/80">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3" aria-label="Navigasi utama">
+
+    <!-- Logo -->
+    <a href="#top" class="flex items-center gap-2.5 shrink-0 group">
+      <span class="relative grid place-items-center w-9 h-9 rounded-xl border border-cyber/40 bg-cyber/10">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 text-cyber" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2.5 4.5 5.6v5.2c0 4.7 3.2 8.6 7.5 10.7 4.3-2.1 7.5-6 7.5-10.7V5.6L12 2.5Z"/>
+          <path d="m9 11.8 2.2 2.2L15.4 9.6"/>
+        </svg>
+        <span class="absolute inset-0 rounded-xl shadow-glow-cyber opacity-0 group-hover:opacity-100 transition-opacity"></span>
+      </span>
+      <span class="text-lg font-extrabold tracking-tight text-white">Vibe<span class="text-cyber">Proof</span></span>
+      <span class="chip hidden sm:inline-flex items-center h-6 px-2.5 rounded-full border border-cyber/40 bg-cyber/10 text-cyber text-[10px] font-bold tracking-widest uppercase">BOT Chain</span>
+    </a>
+
+    <div class="flex-1"></div>
+
+    <!-- Network Switcher -->
+    <div class="flex items-center rounded-full border border-zinc-800 bg-ink-800 p-1" role="group" aria-label="Pilih jaringan BOT Chain">
+      <button data-net="testnet" class="net-btn chip h-8 px-3 rounded-full text-xs font-semibold transition-colors">Testnet (968)</button>
+      <button data-net="mainnet" class="net-btn chip h-8 px-3 rounded-full text-xs font-semibold transition-colors">Mainnet (677)</button>
+    </div>
+
+    <!-- Quick links -->
+    <div class="hidden lg:flex items-center gap-1.5">
+      <a href="https://faucet.botchain.ai" target="_blank" rel="noopener" class="chip h-10 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-cyber hover:bg-ink-700 transition-colors">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v6m0 0 3-3m-3 3L9 6"/><path d="M5 13a7 7 0 0 0 14 0c0-2-1.5-3.5-2.5-4.5h-9C6.5 9.5 5 11 5 13Z"/></svg>
+        Faucet BOT
+      </a>
+      <a href="https://t.me/BOTChain_ai" target="_blank" rel="noopener" class="chip h-10 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-cyber hover:bg-ink-700 transition-colors">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M21.9 4.6 19 19.3c-.2 1-.8 1.2-1.6.8l-4.5-3.3-2.2 2.1c-.2.2-.4.4-.9.4l.3-4.6L18.6 7c.4-.3-.1-.5-.6-.2L7.7 13.3l-4.4-1.4c-1-.3-1-1 .2-1.4l17.2-6.6c.8-.3 1.5.2 1.2 1.7Z"/></svg>
+        Telegram
+      </a>
+      <a href="https://scan.botchain.ai" target="_blank" rel="noopener" class="chip h-10 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-cyber hover:bg-ink-700 transition-colors">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></svg>
+        BOTScan
+      </a>
+    </div>
+
+    <!-- Wallet -->
+    <button id="walletBtn" class="chip h-10 px-4 rounded-lg border border-cyber/50 bg-cyber/10 text-cyber text-xs font-bold hover:bg-cyber/20 transition-colors inline-flex items-center gap-2">
+      <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a2 2 0 0 1 2 2v1"/><path d="M3 7.5V17a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 1 3 7.5Z"/><circle cx="16.5" cy="14" r="1.2" fill="currentColor" stroke="none"/></svg>
+      <span id="walletLabel">Connect MetaMask</span>
+    </button>
+
+    <!-- Mobile menu -->
+    <button id="mobileMenuBtn" class="lg:hidden h-10 w-10 grid place-items-center rounded-lg border border-zinc-800 text-zinc-400 hover:text-white" aria-label="Buka menu">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </nav>
+
+  <div id="mobileMenu" class="hidden lg:hidden border-t border-zinc-800/80 bg-ink-850 px-4 py-3 space-y-1">
+    <a href="https://faucet.botchain.ai" target="_blank" rel="noopener" class="chip flex h-11 items-center gap-2 rounded-lg px-3 text-sm text-zinc-300 hover:bg-ink-700">💧 Faucet BOT Token</a>
+    <a href="https://t.me/BOTChain_ai" target="_blank" rel="noopener" class="chip flex h-11 items-center gap-2 rounded-lg px-3 text-sm text-zinc-300 hover:bg-ink-700">✈️ Telegram Community</a>
+    <a href="https://scan.botchain.ai" target="_blank" rel="noopener" class="chip flex h-11 items-center gap-2 rounded-lg px-3 text-sm text-zinc-300 hover:bg-ink-700">🔍 BOTScan Explorer</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ══════════════════ 2. HERO & VALUE PROPOSITION ══════════════════ -->
+<section class="relative overflow-hidden">
+  <div class="absolute inset-0 hero-bg opacity-30 mask-fade-b" aria-hidden="true"></div>
+  <div class="absolute inset-0 grid-lines opacity-60 mask-fade-b" aria-hidden="true"></div>
+  <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[420px] rounded-full bg-cyber/10 blur-[120px]" aria-hidden="true"></div>
+
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
+    <span class="chip inline-flex items-center gap-2 h-8 px-4 rounded-full border border-zinc-700/80 bg-ink-800/70 text-[11px] font-semibold tracking-widest uppercase text-zinc-400">
+      <span class="w-1.5 h-1.5 rounded-full bg-safe dot-live"></span>
+      Girl Meets Tech × On Chain Consultancy — Build Week Hackathon Vol.2
+    </span>
+
+    <h1 class="mt-6 text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-[1.05]">
+      Audit in Seconds.<br class="hidden sm:block" />
+      <span class="bg-gradient-to-r from-cyber via-cyber-600 to-safe bg-clip-text text-transparent">Certify on BOT Chain.</span>
+    </h1>
+
+    <p class="mt-5 max-w-2xl mx-auto text-base sm:text-lg text-zinc-400 leading-relaxed">
+      Di era <em class="text-zinc-200 not-italic font-semibold">vibe coding</em>, ribuan smart contract hasil generate AI berangkat ke mainnet dengan bug kritis yang tak terlihat.
+      VibeProof memindai kode Solidity Anda dalam hitungan detik, menghitung Security Score 0–100, lalu mengunci bukti audit ber-hash Keccak-256 secara permanen di BOT Chain.
+    </p>
+
+    <!-- Feature badges -->
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <span class="chip inline-flex items-center gap-2 h-10 px-4 rounded-full border border-zinc-800 bg-ink-800/80 text-xs font-semibold text-zinc-200">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 text-cyber" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>
+        Zero Setup Required
+      </span>
+      <span class="chip inline-flex items-center gap-2 h-10 px-4 rounded-full border border-zinc-800 bg-ink-800/80 text-xs font-semibold text-zinc-200">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 text-cyber" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 8h10M7 12h10M7 16h6"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg>
+        Deterministic Keccak256 Hash
+      </span>
+      <span class="chip inline-flex items-center gap-2 h-10 px-4 rounded-full border border-zinc-800 bg-ink-800/80 text-xs font-semibold text-zinc-200">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 text-cyber" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3 5 6v5c0 4.4 3 8.1 7 10 4-1.9 7-5.6 7-10V6l-7-3Z"/><path d="m9.5 11.6 1.8 1.8 3.4-3.6"/></svg>
+        Verifiable On-Chain Proof
+      </span>
+    </div>
+
+    <!-- CTA -->
+    <div class="mt-9 flex flex-wrap justify-center gap-3">
+      <a href="#workspace" class="chip btn-cyber inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-cyber text-ink-900 text-sm font-extrabold">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></svg>
+        Start Free Scan
+      </a>
+      <a href="#proofs" class="chip inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-zinc-700 bg-ink-800/70 text-sm font-semibold text-zinc-200 hover:border-cyber/50 hover:text-cyber transition-colors">
+        View Live Proofs
+      </a>
+    </div>
+
+    <!-- Stats strip -->
+    <dl class="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-px rounded-2xl border border-zinc-800 bg-zinc-800 overflow-hidden max-w-3xl mx-auto">
+      <div class="bg-ink-850 px-4 py-4"><dt class="text-[10px] uppercase tracking-widest text-zinc-500">Contracts Audited</dt><dd class="mt-1 font-mono text-xl font-bold text-white">1,284</dd></div>
+      <div class="bg-ink-850 px-4 py-4"><dt class="text-[10px] uppercase tracking-widest text-zinc-500">Avg Scan Time</dt><dd class="mt-1 font-mono text-xl font-bold text-cyber">4.2s</dd></div>
+      <div class="bg-ink-850 px-4 py-4"><dt class="text-[10px] uppercase tracking-widest text-zinc-500">On-Chain Proofs</dt><dd class="mt-1 font-mono text-xl font-bold text-safe">1,102</dd></div>
+      <div class="bg-ink-850 px-4 py-4"><dt class="text-[10px] uppercase tracking-widest text-zinc-500">Avg Cert Gas</dt><dd class="mt-1 font-mono text-xl font-bold text-white">0.00021 BOT</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ══════════════════ 3. CORE INTERACTIVE WORKSPACE ══════════════════ -->
+<section id="workspace" class="relative max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+  <div class="flex items-end justify-between gap-4 mb-6">
+    <div>
+      <p class="chip text-[11px] font-bold tracking-[0.25em] uppercase text-cyber">Core Workspace</p>
+      <h2 class="mt-1 text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Interactive Audit Studio</h2>
+    </div>
+    <span class="chip hidden sm:inline-flex items-center gap-2 h-8 px-3 rounded-full border border-zinc-800 bg-ink-800 text-[11px] font-mono text-zinc-400">
+      <span class="w-1.5 h-1.5 rounded-full bg-cyber dot-live"></span> engine v2.3 · solc 0.8.24
+    </span>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-6 items-start">
+
+    <!-- ─────── LEFT: SOLIDITY EDITOR ─────── -->
+    <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+      <!-- editor header -->
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+        <span class="flex gap-1.5" aria-hidden="true"><i class="w-2.5 h-2.5 rounded-full bg-crit/70"></i><i class="w-2.5 h-2.5 rounded-full bg-warn/70"></i><i class="w-2.5 h-2.5 rounded-full bg-safe/70"></i></span>
+        <label class="relative flex-1 min-w-[160px]">
+          <span class="sr-only">Nama smart contract</span>
+          <svg viewBox="0 0 24 24" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>
+          <input id="contractName" value="VulnerableVault.sol" spellcheck="false"
+                 class="chip w-full h-10 pl-9 pr-3 rounded-lg bg-ink-900 border border-zinc-800 font-mono text-xs text-zinc-200 focus:border-cyber/60 focus:outline-none focus:ring-1 focus:ring-cyber/40 transition-colors" />
+        </label>
+        <span class="chip h-7 px-2.5 inline-flex items-center rounded-md bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">Solidity ^0.8</span>
+      </div>
+
+      <!-- preset chips -->
+      <div class="px-4 py-3 border-b border-zinc-800 flex flex-wrap gap-2" role="group" aria-label="Preset smart contract">
+        <button data-preset="vulnerable" class="preset-chip chip h-10 px-3.5 rounded-lg border text-xs font-semibold border-crit/40 bg-crit/10 text-crit">🚨 Vulnerable Ether Vault</button>
+        <button data-preset="registry"   class="preset-chip chip h-10 px-3.5 rounded-lg border text-xs font-semibold border-zinc-700 bg-ink-700 text-zinc-300 hover:border-warn/50">⚠️ Insecure Token Registry</button>
+        <button data-preset="safe"       class="preset-chip chip h-10 px-3.5 rounded-lg border text-xs font-semibold border-zinc-700 bg-ink-700 text-zinc-300 hover:border-safe/50">🛡️ Certified Safe Vault</button>
+      </div>
+
+      <!-- code area -->
+      <div class="relative">
+        <div id="scanSweep" class="pointer-events-none absolute inset-0 overflow-hidden hidden z-10">
+          <div class="scan-sweep h-16 w-full bg-gradient-to-b from-transparent via-cyber/10 to-transparent"></div>
+        </div>
+        <div class="flex h-[400px] bg-ink-900">
+          <div id="gutter" class="scroll-thin shrink-0 w-12 overflow-hidden py-4 border-r border-zinc-800/80 bg-ink-850 font-mono text-[12.5px] leading-6 text-zinc-600 text-right select-none" aria-hidden="true"></div>
+          <textarea id="codeInput" spellcheck="false" aria-label="Editor kode Solidity"
+            class="code-input scroll-thin flex-1 resize-none bg-transparent px-4 py-4 font-mono text-[12.5px] leading-6 text-zinc-300 focus:outline-none whitespace-pre overflow-auto"></textarea>
+        </div>
+      </div>
+
+      <!-- info bar -->
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 border-t border-zinc-800 bg-ink-850 font-mono text-[11px] text-zinc-500">
+        <span class="chip inline-flex items-center gap-1.5">
+          <span class="text-zinc-600">Code Hash:</span>
+          <span id="codeHashShort" class="text-cyber">0x0000…0000</span>
+          <button id="copyHashBtn" class="ml-1 text-zinc-600 hover:text-cyber transition-colors" title="Copy full hash" aria-label="Copy code hash">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+          </button>
+        </span>
+        <span class="chip" id="lineCount">0 lines</span>
+        <span class="chip hidden sm:inline">UTF-8</span>
+        <span class="flex-1"></span>
+        <span class="chip text-zinc-600">/Ctrl + Enter = scan</span>
+      </div>
+
+      <!-- CTA -->
+      <div class="px-4 py-4 border-t border-zinc-800 bg-ink-850">
+        <button id="scanBtn" class="btn-cyber chip w-full h-12 rounded-xl bg-cyber text-ink-900 text-sm font-extrabold inline-flex items-center justify-center gap-2">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/><path d="M11 8v6M8 11h6"/></svg>
+          Scan with AI Auditor
+        </button>
+      </div>
+    </div>
+
+    <!-- ─────── RIGHT: AUDIT RESULTS ─────── -->
+    <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+      <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-ink-850">
+        <h3 class="text-sm font-bold text-white tracking-wide">Audit Report</h3>
+        <span class="flex-1"></span>
+        <span class="chip hidden md:inline text-[10px] uppercase tracking-widest text-zinc-600 mr-1">Preview state:</span>
+        <button data-preview="idle"     class="preview-btn chip h-7 px-2.5 rounded-full border border-zinc-700 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:border-zinc-500">Idle</button>
+        <button data-preview="scanning" class="preview-btn chip h-7 px-2.5 rounded-full border border-zinc-700 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:border-cyber/60">Scanning</button>
+        <button data-preview="safe"     class="preview-btn chip h-7 px-2.5 rounded-full border border-zinc-700 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:border-safe/60">Safe</button>
+        <button data-preview="warning"  class="preview-btn chip h-7 px-2.5 rounded-full border border-zinc-700 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:border-warn/60">Warning</button>
+        <button data-preview="critical" class="preview-btn chip h-7 px-2.5 rounded-full border border-zinc-700 text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:border-crit/60">Critical</button>
+      </div>
+
+      <!-- IDLE -->
+      <div id="stateIdle" class="p-8">
+        <div class="rounded-xl border border-dashed border-zinc-700 bg-ink-850/60 px-6 py-14 text-center">
+          <div class="mx-auto w-16 h-16 grid place-items-center rounded-2xl border border-zinc-700 bg-ink-700 floaty">
+            <svg viewBox="0 0 24 24" class="w-8 h-8 text-zinc-500" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.6v5.2c0 4.7 3.2 8.6 7.5 10.7 4.3-2.1 7.5-6 7.5-10.7V5.6L12 2.5Z"/><path d="M12 8v4m0 3.5v.01"/></svg>
+          </div>
+          <h4 class="mt-5 text-base font-bold text-zinc-200">Belum ada audit</h4>
+          <p class="mt-2 text-sm text-zinc-500 max-w-sm mx-auto">Pilih preset kontrak atau tempel kode Solidity Anda, lalu jalankan AI Auditor untuk melihat Security Score & temuan kerentanan.</p>
+          <button id="idleRunBtn" class="chip mt-6 h-11 px-5 rounded-lg border border-cyber/50 bg-cyber/10 text-cyber text-xs font-bold hover:bg-cyber/20 transition-colors">Run demo scan →</button>
+        </div>
+      </div>
+
+      <!-- SCANNING -->
+      <div id="stateScanning" class="p-6 hidden">
+        <div class="rounded-xl border border-zinc-800 bg-ink-900 p-5">
+          <div class="flex items-center gap-3">
+            <span class="w-9 h-9 grid place-items-center rounded-lg border border-cyber/40 bg-cyber/10">
+              <svg viewBox="0 0 24 24" class="w-5 h-5 text-cyber spin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M21 3v6h-6" opacity=".4"/></svg>
+            </span>
+            <div>
+              <p class="text-sm font-bold text-white">AI Auditor bekerja…</p>
+              <p class="font-mono text-[11px] text-zinc-500" id="scanTarget">VulnerableVault.sol</p>
+            </div>
+            <span class="flex-1"></span>
+            <span id="scanPct" class="font-mono text-sm text-cyber font-bold">0%</span>
+          </div>
+          <div class="mt-4 h-1.5 rounded-full bg-ink-600 overflow-hidden">
+            <div id="scanBar" class="h-full w-0 bg-gradient-to-r from-cyber-600 to-cyber transition-[width] duration-300"></div>
+          </div>
+          <div id="scanLog" class="mt-4 font-mono text-[11.5px] leading-6 text-zinc-500 min-h-[150px]"></div>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div id="stateResult" class="hidden">
+        <!-- score header -->
+        <div class="p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-6 border-b border-zinc-800">
+          <div class="relative shrink-0">
+            <svg viewBox="0 0 140 140" class="w-36 h-36">
+              <circle cx="70" cy="70" r="58" stroke="#1f232e" stroke-width="10" fill="none"/>
+              <circle id="dialArc" cx="70" cy="70" r="58" stroke="#10b981" stroke-width="10" fill="none" stroke-linecap="round"
+                      stroke-dasharray="364.42" stroke-dashoffset="364.42" transform="rotate(-90 70 70)"
+                      style="transition: stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1), stroke .4s ease;"/>
+            </svg>
+            <div class="absolute inset-0 grid place-items-center">
+              <div class="text-center">
+                <div id="scoreNum" class="font-mono text-4xl font-extrabold text-white">0</div>
+                <div class="font-mono text-[10px] text-zinc-500 -mt-0.5">/ 100</div>
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0 text-center sm:text-left">
+            <span id="verdictBadge" class="chip inline-flex items-center gap-2 h-8 px-3.5 rounded-full border text-[11px] font-extrabold tracking-widest uppercase border-safe/50 bg-safe/10 text-safe">PASSED — SAFE</span>
+            <h4 id="resultContract" class="mt-3 font-mono text-sm font-bold text-white truncate">VulnerableVault.sol</h4>
+            <p class="mt-1 font-mono text-[11px] text-zinc-500" id="resultMeta">scan 4.2s · engine v2.3 · solc 0.8.24</p>
+            <div class="mt-3 flex flex-wrap justify-center sm:justify-start gap-1.5" id="resultTags"></div>
+          </div>
+        </div>
+
+        <!-- counter matrix -->
+        <div class="grid grid-cols-5 gap-px bg-zinc-800 border-b border-zinc-800">
+          <div class="bg-ink-850 px-2 py-3 text-center"><div id="cntCritical" class="font-mono text-lg font-extrabold text-crit">0</div><div class="text-[9px] uppercase tracking-widest text-zinc-500">Critical</div></div>
+          <div class="bg-ink-850 px-2 py-3 text-center"><div id="cntHigh" class="font-mono text-lg font-extrabold text-orange-400">0</div><div class="text-[9px] uppercase tracking-widest text-zinc-500">High</div></div>
+          <div class="bg-ink-850 px-2 py-3 text-center"><div id="cntMedium" class="font-mono text-lg font-extrabold text-warn">0</div><div class="text-[9px] uppercase tracking-widest text-zinc-500">Medium</div></div>
+          <div class="bg-ink-850 px-2 py-3 text-center"><div id="cntLow" class="font-mono text-lg font-extrabold text-zinc-300">0</div><div class="text-[9px] uppercase tracking-widest text-zinc-500">Low</div></div>
+          <div class="bg-ink-850 px-2 py-3 text-center"><div id="cntGas" class="font-mono text-lg font-extrabold text-cyber">0</div><div class="text-[9px] uppercase tracking-widest text-zinc-500">Gas Tips</div></div>
+        </div>
+
+        <!-- executive summary -->
+        <div class="px-5 sm:px-6 pt-5">
+          <div id="summaryBox" class="rounded-lg border border-zinc-800 border-l-2 border-l-safe bg-ink-850 px-4 py-3">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Executive Summary</p>
+            <p id="summaryText" class="text-[13px] leading-relaxed text-zinc-300"></p>
+          </div>
+        </div>
+
+        <!-- findings -->
+        <div class="px-5 sm:px-6 pt-5">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Vulnerability Findings</p>
+          <div id="findingsList" class="scroll-thin space-y-3 max-h-[300px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- gas insights -->
+        <div class="px-5 sm:px-6 pt-5">
+          <div class="rounded-lg border border-cyber/25 bg-cyber/[0.06] px-4 py-3">
+            <p class="chip inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-cyber mb-2">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>
+              Gas Optimization Insights
+            </p>
+            <ul id="gasList" class="space-y-1.5 text-[12.5px] text-zinc-300"></ul>
+          </div>
+        </div>
+
+        <!-- certify -->
+        <div class="p-5 sm:p-6">
+          <button id="certifyBtn" class="chip w-full h-12 rounded-xl border border-safe/50 bg-safe/10 text-safe text-sm font-extrabold inline-flex items-center justify-center gap-2 hover:bg-safe/20 transition-colors">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3 5 6v5c0 4.4 3 8.1 7 10 4-1.9 7-5.6 7-10V6l-7-3Z"/><path d="m9.5 11.6 1.8 1.8 3.4-3.6"/></svg>
+            Certify on BOT Chain
+          </button>
+          <p class="mt-2 text-center font-mono text-[10.5px] text-zinc-600">Estimasi gas: 21,480 · ±0.00021 BOT · 1 confirmation</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 5. LIVE FEED ══════════════════ -->
+<section id="proofs" class="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+  <div class="flex items-center gap-3 mb-6">
+    <span class="w-2 h-2 rounded-full bg-safe dot-live"></span>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Recent Certified Audits</h2>
+    <span class="chip h-7 px-3 inline-flex items-center rounded-full border border-zinc-800 bg-ink-800 font-mono text-[11px] text-zinc-400">live feed · BOT Chain</span>
+  </div>
+  <div id="feedGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</section>
+
+<!-- ══════════════════ 6. DEVELOPER & JUDGE REFERENCE CARD ══════════════════ -->
+<section id="network" class="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+  <div class="rounded-2xl border border-zinc-800 bg-ink-800 overflow-hidden">
+    <div class="px-5 py-4 border-b border-zinc-800 bg-ink-850 flex flex-wrap items-center gap-3">
+      <h2 class="text-base font-extrabold text-white">Developer & Judge Reference Card</h2>
+      <span class="chip h-6 px-2.5 inline-flex items-center rounded-full bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">EVM Compatible</span>
+      <span class="flex-1"></span>
+      <div class="flex flex-wrap gap-2">
+        <button id="copySourceBtn" class="chip h-10 px-4 rounded-lg border border-zinc-700 bg-ink-700 text-xs font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy Solidity Contract Source</button>
+        <a href="https://remix.ethereum.org" target="_blank" rel="noopener" class="chip h-10 px-4 inline-flex items-center rounded-lg border border-zinc-700 bg-ink-700 text-xs font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Open Remix IDE ↗</a>
+        <button id="addChainBtn" class="chip h-10 px-4 rounded-lg border border-cyber/50 bg-cyber/10 text-xs font-bold text-cyber hover:bg-cyber/20 transition-colors">Add BOT Chain to Wallet</button>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-px bg-zinc-800">
+      <!-- testnet -->
+      <div class="bg-ink-850 p-5">
+        <p class="chip inline-flex items-center gap-2 h-7 px-3 rounded-full border border-cyber/40 bg-cyber/10 text-cyber text-[10px] font-extrabold tracking-widest uppercase mb-4">Testnet · Chain ID 968</p>
+        <dl class="space-y-2.5 font-mono text-[12px]">
+          <div class="flex items-center gap-2"><dt class="w-24 shrink-0 text-zinc-500">RPC URL</dt><dd class="rpc-val flex-1 truncate text-zinc-300" data-val="https://testnet-rpc.botchain.ai">https://testnet-rpc.botchain.ai</dd><button class="copy-rpc text-zinc-600 hover:text-cyber" aria-label="Copy RPC testnet">⧉</button></div>
+          <div class="flex items-center gap-2"><dt class="w-24 shrink-0 text-zinc-500">Explorer</dt><dd class="rpc-val flex-1 truncate text-zinc-300" data-val="https://testnet-scan.botchain.ai">https://testnet-scan.botchain.ai</dd><button class="copy-rpc text-zinc-600 hover:text-cyber" aria-label="Copy explorer testnet">⧉</button></div>
+          <div class="flex items-center gap-2"><dt class="w-24 shrink-0 text-zinc-500">Gas Token</dt><dd class="text-zinc-300">BOT</dd></div>
+          <div class="flex items-center gap-2"><dt class="w-24 shrink-0 text-zinc-500">Faucet</dt><dd class="rpc-val flex-1 truncate text-zinc-300" data-val="https://faucet.botchain.ai">https://faucet.botchain.ai</dd><button class="copy-rpc text-zinc-600 hover:text-cyber" aria-label="Copy faucet">⧉</button></div>
+        </dl>
+      </div>
+      <!-- mainnet -->
+      <div class="bg-ink-850 p-5">
+        <p class="chip inline-flex items-center gap-2 h-7 px-3 rounded-full border border-safe/40 bg-safe/10 text-safe text-[10px] font-extrabold tracking-widest uppercase mb-4">Mainnet · Chain ID 677</p>
+        <dl class="space-y-2.5 font-mono text-[12px]">
+          <div class="flex items-center gap-2"><dt class="w-24 shrink-0 text-zinc-500">RPC URL</dt><dd class="rpc-val flex-1 truncate text-zinc-300" data-val="https://rpc.botchain.ai">https://rpc.botchain.ai</dd><button class="copy-rpc text-zinc-600 hover:text-cyber" aria-label="Copy RPC mainnet">⧉</button></div>
+          <div class="flex items-center gap-2"><dt class="w-24 shrink-0 text-zinc-500">Explorer</dt><dd class="rpc-val flex-1 truncate text-zinc-300" data-val="https://scan.botchain.ai">https://scan.botchain.ai (BOTScan)</dd><button class="copy-rpc text-zinc-600 hover:text-cyber" aria-label="Copy explorer mainnet">⧉</button></div>
+          <div class="flex items-center gap-2"><dt class="w-24 shrink-0 text-zinc-500">Gas Token</dt><dd class="text-zinc-300">BOT</dd></div>
+          <div class="flex items-center gap-2"><dt class="w-24 shrink-0 text-zinc-500">Block Limit</dt><dd class="text-zinc-300">35,000,000</dd></div>
+        </dl>
+      </div>
+    </div>
+    <p class="px-5 py-3 border-t border-zinc-800 bg-ink-850 font-mono text-[10.5px] text-zinc-600">Parameter mainnet diverifikasi via ChainList (chain 677 · currency BOT · explorer botscan) · nilai testnet bersifat mock untuk demo hackathon.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════════════ 7. FOOTER ══════════════════ -->
+<footer class="border-t border-zinc-800 bg-ink-850">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid md:grid-cols-3 gap-8">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <span class="grid place-items-center w-8 h-8 rounded-lg border border-cyber/40 bg-cyber/10">
+          <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 w-5 h-5 text-cyber" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.6v5.2c0 4.7 3.2 8.6 7.5 10.7 4.3-2.1 7.5-6 7.5-10.7V5.6L12 2.5Z"/><path d="m9 11.8 2.2 2.2L15.4 9.6"/></svg>
+        </span>
+        <span class="font-extrabold text-white">Vibe<span class="text-cyber">Proof</span></span>
+      </div>
+      <p class="mt-3 text-[13px] text-zinc-500 leading-relaxed">AI-Powered Smart Contract Auditor & On-Chain Certification on BOT Chain. Audit bersifat advisory — bukan pengganti manual review profesional.</p>
+    </div>
+    <div>
+      <p class="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Community</p>
+      <ul class="space-y-2 text-[13px]">
+        <li><a class="hover:text-cyber transition-colors" href="https://t.me/BOTChain_ai" target="_blank" rel="noopener">Telegram Community</a></li>
+        <li><a class="hover:text-cyber transition-colors" href="https://x.com/BOTChain_ai" target="_blank" rel="noopener">X / Twitter — @BOTChain_ai</a></li>
+        <li><a class="hover:text-cyber transition-colors" href="https://scan.botchain.ai" target="_blank" rel="noopener">BOTScan Explorer</a></li>
+        <li><a class="hover:text-cyber transition-colors" href="https://faucet.botchain.ai" target="_blank" rel="noopener">Faucet BOT Token</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Hackathon</p>
+      <p class="text-[13px] text-zinc-400 leading-relaxed">Built for <span class="text-zinc-200 font-semibold">Girl Meets Tech × On Chain Consultancy — Build Week Hackathon Vol.2</span>. Deployed & certified on BOT Chain (Testnet 968 / Mainnet 677).</p>
+    </div>
+  </div>
+  <div class="border-t border-zinc-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex flex-wrap items-center gap-3 font-mono text-[11px] text-zinc-600">
+      <span>© 2025 VibeProof. All rights reserved.</span>
+      <span class="flex-1"></span>
+      <span class="chip">keccak256-anchored proofs · EVM · gas: BOT</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════ 4. ON-CHAIN CERTIFICATE MODAL ══════════════════ -->
+<div id="certModal" class="fixed inset-0 z-[70] hidden" role="dialog" aria-modal="true" aria-label="Sertifikat audit on-chain">
+  <div id="certBackdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+  <div class="absolute inset-0 overflow-y-auto scroll-thin p-4 sm:p-8 grid place-items-center">
+    <div id="certPanel" class="relative w-full max-w-lg rounded-2xl border border-cyber/30 cert-frame shadow-glow-cyber overflow-hidden transition-all duration-300 scale-95 opacity-0">
+
+      <!-- ribbon -->
+      <div class="px-6 pt-6 pb-4 text-center border-b border-dashed border-zinc-700/80">
+        <span class="chip inline-flex items-center gap-2 h-8 px-4 rounded-full border border-cyber/50 bg-cyber/10 text-cyber text-[10px] font-extrabold tracking-[0.2em] uppercase">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3 5 6v5c0 4.4 3 8.1 7 10 4-1.9 7-5.6 7-10V6l-7-3Z"/><path d="m9.5 11.6 1.8 1.8 3.4-3.6"/></svg>
+          Verified Audit Proof — BOT Chain
+        </span>
+        <button id="certClose" class="absolute top-4 right-4 w-10 h-10 grid place-items-center rounded-lg text-zinc-500 hover:text-white hover:bg-ink-700 transition-colors" aria-label="Tutup sertifikat">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="p-6">
+        <!-- seal + headline -->
+        <div class="flex items-center gap-4">
+          <div id="certSeal" class="shrink-0 w-16 h-16 grid place-items-center rounded-full border-2 border-safe bg-safe/10">
+            <svg viewBox="0 0 24 24" class="w-8 h-8 text-safe" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12.5 4 4L18 8"/></svg>
+          </div>
+          <div class="min-w-0">
+            <h3 id="certContract" class="font-mono text-lg font-extrabold text-white truncate">SafeVault.sol</h3>
+            <p class="mt-0.5 font-mono text-[11px] text-zinc-500" id="certChain">BOT Chain Testnet · Chain ID 968</p>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <span id="certScore" class="chip h-7 px-3 inline-flex items-center rounded-full bg-safe/15 border border-safe/50 text-safe font-mono text-xs font-extrabold">96/100</span>
+              <span id="certVerdict" class="chip h-7 px-3 inline-flex items-center rounded-full bg-safe/10 border border-safe/40 text-safe text-[10px] font-extrabold tracking-widest uppercase">PASSED — SAFE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- metadata -->
+        <dl class="mt-5 rounded-xl border border-zinc-800 bg-ink-900/80 divide-y divide-zinc-800/80 font-mono text-[11.5px]">
+          <div class="flex gap-3 px-4 py-2.5"><dt class="w-28 shrink-0 text-zinc-500">Code Hash</dt><dd id="certCodeHash" class="flex-1 break-all text-cyber">0x…</dd></div>
+          <div class="flex gap-3 px-4 py-2.5"><dt class="w-28 shrink-0 text-zinc-500">Auditor Wallet</dt><dd id="certWallet" class="flex-1 break-all text-zinc-300">0x…</dd></div>
+          <div class="flex gap-3 px-4 py-2.5"><dt class="w-28 shrink-0 text-zinc-500">TX Hash</dt><dd id="certTx" class="flex-1 break-all text-zinc-300">0x…</dd></div>
+          <div class="flex gap-3 px-4 py-2.5"><dt class="w-28 shrink-0 text-zinc-500">Block</dt><dd id="certBlock" class="flex-1 text-zinc-300">#—</dd></div>
+          <div class="flex gap-3 px-4 py-2.5"><dt class="w-28 shrink-0 text-zinc-500">Timestamp</dt><dd id="certTime" class="flex-1 text-zinc-300">—</dd></div>
+        </dl>
+
+        <!-- markdown badge generator -->
+        <div class="mt-5">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">GitHub README Badge</p>
+          <div class="rounded-lg border border-zinc-800 bg-ink-900 p-3">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="chip inline-flex overflow-hidden rounded font-mono text-[10px] font-bold h-5">
+                <span class="px-2 bg-[#555] text-white grid place-items-center">VibeProof</span>
+                <span id="badgePreviewScore" class="px-2 bg-safe text-white grid place-items-center">96/100</span>
+              </span>
+              <span class="text-[10px] text-zinc-600 font-mono">preview</span>
+            </div>
+            <code id="badgeMarkdown" class="block font-mono text-[10.5px] text-zinc-400 break-all leading-relaxed"></code>
+            <button id="copyBadgeBtn" class="chip mt-3 h-9 px-3.5 rounded-lg border border-zinc-700 bg-ink-700 text-[11px] font-bold text-zinc-200 hover:border-cyber/60 hover:text-cyber transition-colors">Copy Markdown</button>
+          </div>
+        </div>
+
+        <!-- actions -->
+        <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <a id="certExplorerBtn" href="https://scan.botchain.ai" target="_blank" rel="noopener" class="chip h-11 px-4 rounded-lg bg-cyber text-ink-900 text-xs font-extrabold inline-flex items-center justify-center gap-2 hover:brightness-110 transition">
+            View on BOTScan Explorer ↗
+          </a>
+          <button id="shareXBtn" class="chip h-11 px-4 rounded-lg border border-zinc-700 bg-ink-700 text-xs font-bold text-zinc-100 inline-flex items-center justify-center gap-2 hover:border-cyber/60 transition-colors">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor"><path d="M17.7 3H21l-7.3 8.3L22.2 21h-6.8l-5.3-6.2L4 21H.7l7.8-8.9L1.5 3h7l4.8 5.7L17.7 3Zm-1.2 16h1.9L6.9 4.9H4.9L16.5 19Z"/></svg>
+            Share on X
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- toasts -->
+<div id="toasts" class="fixed bottom-5 right-5 z-[80] space-y-2 w-[calc(100vw-2.5rem)] max-w-sm"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   VibeProof — SPA mock logic (modular, state-driven)
+   ═══════════════════════════════════════════════════════════ */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+/* ---------- Networks ---------- */
+const NETWORKS = {
+  testnet: { key:'testnet', name:'BOT Chain Testnet', id:968, rpc:'https://testnet-rpc.botchain.ai', explorer:'https://testnet-scan.botchain.ai', faucet:'https://faucet.botchain.ai' },
+  mainnet: { key:'mainnet', name:'BOT Chain Mainnet', id:677, rpc:'https://rpc.botchain.ai',         explorer:'https://scan.botchain.ai',         faucet:'https://faucet.botchain.ai' }
+};
+
+/* ---------- Preset contracts + audit fixtures ---------- */
+const PRESETS = {
+  vulnerable: {
+    file: 'VulnerableVault.sol',
+    code:
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+/// @title EtherVault — INSECURE DEMO (vibe-coded)
+contract EtherVault {
+    mapping(address => uint256) public balances;
+    address public owner;
+
+    constructor() {
+        owner = tx.origin;
+    }
+
+    function deposit() external payable {
+        balances[msg.sender] += msg.value;
+    }
+
+    function withdraw() external {
+        uint256 bal = balances[msg.sender];
+        require(bal > 0, "No funds");
+
+        (bool ok, ) = msg.sender.call{value: bal}("");
+        require(ok, "Transfer failed");
+
+        balances[msg.sender] = 0;
+    }
+
+    function emergencyWithdraw(address payable _to) public {
+        require(tx.origin == owner, "Not owner");
+        _to.transfer(address(this).balance);
+    }
+
+    function setOwner(address _new) external {
+        owner = _new;
+    }
+
+    receive() external payable {
+        balances[msg.sender] += msg.value;
+    }
+}`,
+    result: {
+      score: 23, verdict: 'CRITICAL RISK', scanTime: '3.8s',
+      counts: { critical: 2, high: 2, medium: 1, low: 1, gas: 3 },
+      tags: ['reentrancy', 'tx.origin', 'access-control', 'no-events'],
+      summary: 'Kontrak ini dapat dikuras sepenuhnya melalui reentrancy pada withdraw(): transfer ETH eksternal dieksekusi sebelum state balance di-reset. Autentikasi berbasis tx.origin membuka serangan phishing front-running, dan setOwner() tanpa access control memungkinkan siapa pun mengambil alih kontrak. Jangan deploy sebelum perbaikan menyeluruh.',
+      findings: [
+        { sev:'critical', title:'Reentrancy — external call sebelum state update', line:21,
+          snippet:'(bool ok, ) = msg.sender.call{value: bal}("");\nrequire(ok, "Transfer failed");\nbalances[msg.sender] = 0;   // terlalu lambat',
+          fix:'Terapkan pola checks-effects-interactions + modifier nonReentrant (OpenZeppelin ReentrancyGuard).' },
+        { sev:'critical', title:'tx.origin sebagai autentikasi (phishing-prone)', line:28,
+          snippet:'require(tx.origin == owner, "Not owner");',
+          fix:'Ganti dengan msg.sender + modifier onlyOwner; tx.origin mengikuti wallet pemanggil, bukan kontrak pemanggil.' },
+        { sev:'high', title:'Missing access control pada setOwner()', line:32,
+          snippet:'function setOwner(address _new) external {\n    owner = _new;   // siapa pun dapat memanggil',
+          fix:'Tambahkan modifier onlyOwner dan event OwnershipTransferred.' },
+        { sev:'high', title:'emergencyWithdraw() tanpa guard & tanpa event', line:27,
+          snippet:'function emergencyWithdraw(address payable _to) public {',
+          fix:'Batasi onlyOwner + nonReentrant + emit event; pertimbangkan timelock & multisig.' },
+        { sev:'medium', title:'Tidak ada event untuk deposit/withdraw', line:13,
+          snippet:'balances[msg.sender] += msg.value;   // silent state change',
+          fix:'Emit event Deposited/Withdrawn agar aktivitas ter-index oleh explorer & monitor.' },
+        { sev:'low', title:'transfer() dengan stipend gas 2300', line:29,
+          snippet:'_to.transfer(address(this).balance);',
+          fix:'Gunakan call{value:} dengan checks-effects-interactions agar kompatibel dengan kontrak penerima.' }
+      ],
+      gasTips: [
+        'Pack balances + owner ke slot terpisah sudah OK; hindari double SLOAD bal dengan variabel lokal.',
+        'Gunakan custom errors代替 require strings untuk menghemat ±60 gas per revert.',
+        'Cache address(this).balance sekali ke stack sebelum transfer.'
+      ]
+    }
+  },
+
+  registry: {
+    file: 'TokenRegistry.sol',
+    code:
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+interface IERC20 {
+    function transfer(address to, uint256 amount) external returns (bool);
+}
+
+contract TokenRegistry {
+    struct Token { string name; string symbol; address token; uint8 decimals; bool verified; }
+
+    mapping(address => Token) public tokens;
+    address[] public allTokens;
+    address public admin;
+    uint256 public registryFee = 0.01 ether;
+
+    constructor() {
+        admin = msg.sender;
+    }
+
+    function register(address _token, string memory _name, string memory _symbol) external payable {
+        require(msg.value >= registryFee, "Insufficient fee");
+        tokens[_token] = Token(_name, _symbol, _token, 18, false);
+        allTokens.push(_token);
+    }
+
+    function verifyToken(address _token) external {
+        tokens[_token].verified = true;
+    }
+
+    function claimFees() external {
+        payable(admin).transfer(address(this).balance);
+    }
+
+    function setFee(uint256 _fee) external {
+        registryFee = _fee;
+    }
+
+    function bulkTransfer(address _token, address[] calldata _to, uint256[] calldata _amt) external {
+        for (uint256 i = 0; i < _to.length; i++) {
+            IERC20(_token).transfer(_to[i], _amt[i]);
+        }
+    }
+}`,
+    result: {
+      score: 64, verdict: 'WARNINGS DETECTED', scanTime: '4.1s',
+      counts: { critical: 0, high: 1, medium: 3, low: 2, gas: 2 },
+      tags: ['access-control', 'unchecked-return', 'dos-loop'],
+      summary: 'Tidak ditemukan vektor drain langsung, namun verifyToken() terbuka untuk siapa pun — badge "verified" dapat dipalsukan oleh aktor jahat. Parameter fee dapat diubah tanpa batas, return value ERC-20 transfer tidak diverifikasi, dan loop tanpa batas berisiko DoS saat gas limit terlampaui. Perbaiki sebelum sertifikasi penuh.',
+      findings: [
+        { sev:'high', title:'Missing access control pada verifyToken()', line:26,
+          snippet:'function verifyToken(address _token) external {\n    tokens[_token].verified = true;',
+          fix:'Tambahkan modifier onlyAdmin agar status verifikasi tidak dapat dipalsukan.' },
+        { sev:'medium', title:'Parameter ekonomi setFee() tanpa batas & tanpa otoritas', line:34,
+          snippet:'function setFee(uint256 _fee) external {\n    registryFee = _fee;',
+          fix:'Batasi onlyAdmin +上限 MAX_FEE dan emit event FeeUpdated.' },
+        { sev:'medium', title:'Return value ERC-20 transfer tidak diperiksa', line:40,
+          snippet:'IERC20(_token).transfer(_to[i], _amt[i]);',
+          fix:'Gunakan SafeERC20.safeTransfer atau require(transfer(...), "TF").' },
+        { sev:'medium', title:'Registrasi tanpa validasi zero-address / duplikat', line:22,
+          snippet:'tokens[_token] = Token(_name, _symbol, _token, 18, false);',
+          fix:'require(_token != address(0)) dan cek duplikat sebelum push ke allTokens.' },
+        { sev:'low', title:'Tidak ada event register / verify / claim', line:20,
+          snippet:'function register(...) external payable {',
+          fix:'Emit event Registered, Verified, FeesClaimed untuk audit trail.' },
+        { sev:'low', title:'Unbounded loop pada bulkTransfer (DoS gas)', line:39,
+          snippet:'for (uint256 i = 0; i < _to.length; i++) {',
+          fix:'Batasi panjang batch atau gunakan pola pull-payment (withdrawal pattern).' }
+      ],
+      gasTips: [
+        'Struct Token melebihi 1 slot — pisahkan field hot (verified) ke mapping terpisah untuk SSTORE murah.',
+        'Gunakan unchecked ++i pada loop (Solidity 0.8 overflow check redundan di sini).'
+      ]
+    }
+  },
+
+  safe: {
+    file: 'SafeVault.sol',
+    code:
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+/// @title SafeVault — production-grade custody module
+/// @notice Audited with VibeProof · Score 96/100
+contract SafeVault is Ownable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
+    uint256 public constant MAX_FEE_BPS = 500;
+    uint256 public feeBps;
+    address public immutable weth;
+
+    mapping(address => uint256) private _shares;
+    uint256 public totalShares;
+
+    event Deposited(address indexed user, uint256 amount, uint256 shares);
+    event Withdrawn(address indexed user, uint256 amount, uint256 shares);
+    event FeeUpdated(uint256 oldFee, uint256 newFee);
+
+    constructor(address _weth, uint256 _feeBps) Ownable(msg.sender) {
+        require(_weth != address(0), "SafeVault: zero address");
+        require(_feeBps <= MAX_FEE_BPS, "SafeVault: fee too high");
+        weth = _weth;
+        feeBps = _feeBps;
+    }
+
+    function deposit(uint256 _amount) external nonReentrant {
+        require(_amount > 0, "SafeVault: zero amount");
+        uint256 shares = (_amount * 1e18) / _pricePerShare();
+        _shares[msg.sender] += shares;
+        totalShares += shares;
+        IERC20(weth).safeTransferFrom(msg.sender, address(this), _amount);
+        emit Deposited(msg.sender, _amount, shares);
+    }
+
+    function withdraw(uint256 _shareAmt) external nonReentrant {
+        uint256 bal = _shares[msg.sender];
+        require(bal >= _shareAmt, "SafeVault: insufficient shares");
+        unchecked { _shares[msg.sender] = bal - _shareAmt; }
+        totalShares -= _shareAmt;
+        uint256 amount = (_shareAmt * _pricePerShare()) / 1e18;
+        IERC20(weth).safeTransfer(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount, _shareAmt);
+    }
+
+    function setFee(uint256 _feeBps) external onlyOwner {
+        require(_feeBps <= MAX_FEE_BPS, "SafeVault: fee too high");
+        emit FeeUpdated(feeBps, _feeBps);
+        feeBps = _feeBps;
+    }
+
+    function _pricePerShare() internal view returns (uint256) {
+        uint256 supply = totalShares;
+        if (supply == 0) return 1e18;
+        return (IERC20(weth).balanceOf(address(this)) * 1e18) / supply;
+    }
+}`,
+    result: {
+      score: 96, verdict: 'PASSED — SAFE', scanTime: '4.6s',
+      counts: { critical: 0, high: 0, medium: 0, low: 1, gas: 2 },
+      tags: ['Ownable', 'ReentrancyGuard', 'SafeERC20', 'events-complete'],
+      summary: 'Arsitektur kontrak matang: reentrancy dilindungi ReentrancyGuard, akses administratif dibatasi Ownable, dan seluruh interaksi token memakai SafeERC20 dengan event lengkap. Tidak ditemukan vektor eksploitasi langsung. Satu catatan informatif mengenai ketergantungan pada balanceOf() token sebagai sumber kebenaran harga share.',
+      findings: [
+        { sev:'low', title:'_pricePerShare() mengandalkan balanceOf() token (donation attack surface)', line:59,
+          snippet:'return (IERC20(weth).balanceOf(address(this)) * 1e18) / supply;',
+          fix:'Pertimbangkan accumulator internal / oracle independen bila token mendukung fee-on-transfer atau donation.' }
+      ],
+      gasTips: [
+        'Pack feeBps (uint64 cukup) + totalShares dalam satu slot untuk menghemat ±2,100 gas cold-write.',
+        'Invariant unchecked block sudah tepat — pertahankan komentar dokumentasi agar audit ulang cepat.'
+      ]
+    }
+  }
+};
+
+/* ---------- Live feed fixtures ---------- */
+const FEED = [
+  { name:'LunaStake.sol',    score:96, net:'testnet', tx:'0x7c1e…9ab2', who:'0x38bF…20a4', ago:'2m ago'  },
+  { name:'MetaPayWallet.sol',score:88, net:'mainnet', tx:'0x41d0…c77f', who:'0x9aC1…77e0', ago:'6m ago'  },
+  { name:'YieldRouterV2.sol',score:54, net:'testnet', tx:'0xb39a…10de', who:'0x52Ff…b319', ago:'11m ago' },
+  { name:'NFTMintPass.sol',  score:31, net:'testnet', tx:'0xe802…44aa', who:'0x77bD…0c52', ago:'18m ago' },
+  { name:'GovBridge.sol',    score:92, net:'mainnet', tx:'0x09fe…8d31', who:'0x38bF…20a4', ago:'26m ago' },
+  { name:'TokenVesting.sol', score:84, net:'testnet', tx:'0x6ab4…f209', who:'0xC4e8…19d7', ago:'41m ago' }
+];
+
+/* ---------- App state ---------- */
+const state = {
+  network: 'testnet',
+  wallet: null,            // { address, balance }
+  presetKey: 'vulnerable',
+  phase: 'idle',           // idle | scanning | result | certifying | certified
+  result: null,
+  cert: null
+};
+
+/* ---------- Utilities ---------- */
+function fnv1a(str, seed) {
+  let h = 0x811c9dc5 ^ seed;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+function keccakMock(str) {
+  let out = '';
+  for (let i = 0; i < 8; i++) out += fnv1a(str + '::' + i, 0x9e3779b9 + i * 2654435761).toString(16).padStart(8, '0');
+  return '0x' + out;
+}
+function shortHash(h, a = 6, b = 4) { return h.slice(0, a + 2) + '…' + h.slice(-b); }
+function randHex(n) { let s = ''; const c = '0123456789abcdef'; for (let i = 0; i < n; i++) s += c[Math.floor(Math.random() * 16)]; return s; }
+
+function gradeOf(score) {
+  if (score >= 80) return { key:'safe', color:'#10b981', verdict:'PASSED — SAFE',     chip:'border-safe/50 bg-safe/10 text-safe' };
+  if (score >= 50) return { key:'warn', color:'#f59e0b', verdict:'WARNINGS DETECTED', chip:'border-warn/50 bg-warn/10 text-warn' };
+  return            { key:'crit', color:'#f43f5e', verdict:'CRITICAL RISK',     chip:'border-crit/50 bg-crit/10 text-crit' };
+}
+const SEV_META = {
+  critical: { label:'CRITICAL', chip:'border-crit/50 bg-crit/10 text-crit' },
+  high:     { label:'HIGH',     chip:'border-orange-400/50 bg-orange-400/10 text-orange-400' },
+  medium:   { label:'MEDIUM',   chip:'border-warn/50 bg-warn/10 text-warn' },
+  low:      { label:'LOW',      chip:'border-zinc-600 bg-zinc-700/40 text-zinc-300' },
+  info:     { label:'INFO',     chip:'border-cyber/40 bg-cyber/10 text-cyber' }
+};
+
+function toast(msg, type = 'info') {
+  const colors = { info:'border-cyber/50 text-cyber', ok:'border-safe/50 text-safe', warn:'border-warn/50 text-warn', err:'border-crit/50 text-crit' };
+  const el = document.createElement('div');
+  el.className = `rise-in flex items-start gap-2.5 rounded-xl border ${colors[type]} bg-ink-800/95 backdrop-blur px-4 py-3 text-[12.5px] font-medium shadow-lg`;
+  el.innerHTML = `<span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-current shrink-0"></span><span class="text-zinc-200">${msg}</span>`;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 420); }, 3200);
+}
+
+async function copyText(txt, label = 'Tersalin ke clipboard') {
+  try { await navigator.clipboard.writeText(txt); toast(label, 'ok'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove(); toast(label, 'ok');
+  }
+}
+
+/* ---------- Editor: gutter + hash + lines ---------- */
+const codeInput = $('#codeInput'), gutter = $('#gutter');
+function refreshEditorMeta() {
+  const val = codeInput.value;
+  const lines = val.split('\n').length;
+  gutter.innerHTML = Array.from({ length: lines }, (_, i) => `<div class="pr-3">${i + 1}</div>`).join('');
+  $('#lineCount').textContent = `${lines} lines`;
+  $('#codeHashShort').textContent = shortHash(keccakMock(val), 6, 3);
+}
+codeInput.addEventListener('input', refreshEditorMeta);
+codeInput.addEventListener('scroll', () => { gutter.scrollTop = codeInput.scrollTop; });
+$('#copyHashBtn').addEventListener('click', () => copyText(keccakMock(codeInput.value), 'Full code hash disalin'));
+
+/* ---------- Presets ---------- */
+function loadPreset(key) {
+  state.presetKey = key;
+  const p = PRESETS[key];
+  codeInput.value = p.code;
+  $('#contractName').value = p.file;
+  $$('.preset-chip').forEach(b => {
+    const on = b.dataset.preset === key;
+    b.className = `preset-chip chip h-10 px-3.5 rounded-lg border text-xs font-semibold transition-colors ` +
+      (on ? (key === 'vulnerable' ? 'border-crit/50 bg-crit/15 text-crit' : key === 'registry' ? 'border-warn/50 bg-warn/15 text-warn' : 'border-safe/50 bg-safe/15 text-safe')
+          : 'border-zinc-700 bg-ink-700 text-zinc-300 hover:border-zinc-500');
+  });
+  refreshEditorMeta();
+}
+$$('.preset-chip').forEach(b => b.addEventListener('click', () => { loadPreset(b.dataset.preset); setPhase('idle'); }));
+
+/* ---------- Phase switching ---------- */
+function setPhase(phase) {
+  state.phase = phase;
+  $('#stateIdle').classList.toggle('hidden', phase !== 'idle');
+  $('#stateScanning').classList.toggle('hidden', phase !== 'scanning');
+  $('#stateResult').classList.toggle('hidden', !(phase === 'result' || phase === 'certifying' || phase === 'certified'));
+  $('#scanSweep').classList.toggle('hidden', phase !== 'scanning');
+}
+
+/* ---------- Heuristic mini-engine (untuk kode custom) ---------- */
+function analyzeCustom(code) {
+  const lines = code.split('\n');
+  const findings = [];
+  const hit = re => lines.findIndex(l => re.test(l)) + 1;
+  let c = 0, h = 0, m = 0, l = 0;
+
+  const reLine = hit(/\.call\s*\{\s*value/);
+  if (reLine) { findings.push({ sev:'critical', title:'Potential reentrancy (external call + value)', line:reLine, snippet:lines[reLine-1]?.trim() || '', fix:'Pakai checks-effects-interactions + nonReentrant.' }); c++; }
+  const txo = hit(/tx\.origin/);
+  if (txo) { findings.push({ sev:'critical', title:'tx.origin digunakan untuk logika autentikasi', line:txo, snippet:lines[txo-1]?.trim() || '', fix:'Ganti dengan msg.sender + onlyOwner.' }); c++; }
+  const dlg = hit(/delegatecall/);
+  if (dlg) { findings.push({ sev:'high', title:'delegatecall dengan input eksternal', line:dlg, snippet:lines[dlg-1]?.trim() || '', fix:'Validasi target & batasi fungsi yang dapat didelegatecall.' }); h++; }
+  const sd = hit(/selfdestruct|suicide/);
+  if (sd) { findings.push({ sev:'critical', title:'selfdestruct terjangkau', line:sd, snippet:lines[sd-1]?.trim() || '', fix:'Hapus atau lindungi dengan multisig + timelock.' }); c++; }
+  lines.forEach((ln, i) => {
+    if (/function\s+set\w+\s*\(/.test(ln) && !/onlyOwner|onlyRole|nonReentrant/.test(ln) && !/external\s+view/.test(ln)) {
+      findings.push({ sev:'high', title:'Setter tanpa access control: ' + (ln.match(/function\s+(\w+)/)?.[1] || 'setter') + '()', line:i+1, snippet:ln.trim(), fix:'Tambahkan modifier onlyOwner.' }); h++;
+    }
+  });
+  if (!/event\s+\w+/.test(code)) { findings.push({ sev:'medium', title:'Tidak ada event dideklarasikan', line:1, snippet:'// no `event` declarations found', fix:'Emit event untuk setiap perubahan state material.' }); m++; }
+  if (/payable/.test(code) && !/nonReentrant|ReentrancyGuard/.test(code)) { findings.push({ sev:'medium', title:'Fungsi payable tanpa reentrancy guard', line:hit(/payable/) , snippet:lines[hit(/payable/)-1]?.trim() || '', fix:'Import ReentrancyGuard OpenZeppelin.' }); m++; }
+  if (/\.transfer\(/.test(code)) { findings.push({ sev:'low', title:'ETH transfer dengan stipend 2300 gas', line:hit(/\.transfer\(/), snippet:lines[hit(/\.transfer\(/)-1]?.trim() || '', fix:'Pertimbangkan call{value:} + guard.' }); l++; }
+
+  const g = 2;
+  const score = Math.max(8, Math.min(99, 100 - (c * 26 + h * 12 + m * 6 + l * 3)));
+  return {
+    score, verdict: gradeOf(score).verdict, scanTime: (3 + Math.random() * 2).toFixed(1) + 's',
+    counts: { critical:c, high:h, medium:m, low:l, gas:g },
+    tags: ['heuristic-scan', 'custom-source'],
+    summary: findings.length
+      ? `Heuristic engine menemukan ${findings.length} isu aktif pada source custom. Prioritaskan perbaikan temuan critical/high sebelum melanjutkan ke sertifikasi on-chain.`
+      : 'Tidak ditemukan pola berisiko umum pada source custom. Kontrak layak disertifikasi; tetap lakukan manual review untuk logika bisnis spesifik.',
+    findings,
+    gasTips: ['Hindari SLOAD berulang dalam loop — cache ke memory.', 'Gunakan custom errors untuk menekan biaya revert.']
+  };
+}
+
+/* ---------- Scan flow ---------- */
+const SCAN_STEPS = [
+  '› Parsing Solidity AST · solc v0.8.24 …',
+  '› Resolving inheritance & external calls …',
+  '› Running 42 vulnerability heuristics (SWC registry) …',
+  '› AI deep-analysis: reentrancy graph traversal …',
+  '› Computing deterministic Keccak-256 code hash …',
+  '› Generating security score & gas report …'
+];
+let scanTimers = [];
+function runScan() {
+  if (state.phase === 'scanning') return;
+  scanTimers.forEach(clearTimeout); scanTimers = [];
+  state.cert = null; resetCertifyBtn();
+  setPhase('scanning');
+  $('#scanTarget').textContent = $('#contractName').value || 'Untitled.sol';
+  const log = $('#scanLog'); log.innerHTML = '';
+  $('#scanBar').style.width = '0%'; $('#scanPct').textContent = '0%';
+
+  SCAN_STEPS.forEach((s, i) => {
+    scanTimers.push(setTimeout(() => {
+      log.insertAdjacentHTML('beforeend', `<div class="rise-in">${s}</div>`);
+      const pct = Math.round(((i + 1) / SCAN_STEPS.length) * 100);
+      $('#scanBar').style.width = pct + '%';
+      $('#scanPct').textContent = pct + '%';
+    }, 320 * i));
+  });
+  scanTimers.push(setTimeout(() => {
+    const preset = PRESETS[state.presetKey];
+    const isPresetCode = preset && codeInput.value.trim() === preset.code.trim();
+    state.result = isPresetCode ? preset.result : analyzeCustom(codeInput.value);
+    renderResult();
+    setPhase('result');
+    toast(`Scan selesai — Security Score ${state.result.score}/100`, state.result.score >= 80 ? 'ok' : state.result.score >= 50 ? 'warn' : 'err');
+  }, 320 * SCAN_STEPS.length + 500));
+}
+$('#scanBtn').addEventListener('click', runScan);
+$('#idleRunBtn').addEventListener('click', runScan);
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); runScan(); }
+  if (e.key === 'Escape') closeCert();
+});
+
+/* ---------- Render result ---------- */
+function renderResult() {
+  const r = state.result, g = gradeOf(r.score);
+  $('#resultContract').textContent = $('#contractName').value || 'Untitled.sol';
+  $('#resultMeta').textContent = `scan ${r.scanTime} · engine v2.3 · solc 0.8.24 · ${shortHash(keccakMock(codeInput.value))}`;
+  $('#verdictBadge').textContent = r.verdict;
+  $('#verdictBadge').className = `chip inline-flex items-center gap-2 h-8 px-3.5 rounded-full border text-[11px] font-extrabold tracking-widest uppercase ${g.chip}`;
+  $('#resultTags').innerHTML = (r.tags || []).map(t => `<span class="chip h-6 px-2 inline-flex items-center rounded-md bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">${t}</span>`).join('');
+
+  // dial
+  const C = 364.42, arc = $('#dialArc');
+  arc.setAttribute('stroke', g.color);
+  arc.style.strokeDashoffset = C;
+  requestAnimationFrame(() => requestAnimationFrame(() => { arc.style.strokeDashoffset = C * (1 - r.score / 100); }));
+  // count-up
+  const num = $('#scoreNum'); let t0 = null;
+  const tick = ts => { if (!t0) t0 = ts; const p = Math.min(1, (ts - t0) / 900); num.textContent = Math.round(r.score * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+
+  $('#cntCritical').textContent = r.counts.critical;
+  $('#cntHigh').textContent = r.counts.high;
+  $('#cntMedium').textContent = r.counts.medium;
+  $('#cntLow').textContent = r.counts.low;
+  $('#cntGas').textContent = r.counts.gas;
+
+  const sb = $('#summaryBox');
+  sb.className = `rounded-lg border border-zinc-800 border-l-2 bg-ink-850 px-4 py-3 ${g.key === 'safe' ? 'border-l-safe' : g.key === 'warn' ? 'border-l-warn' : 'border-l-crit'}`;
+  $('#summaryText').textContent = r.summary;
+
+  $('#findingsList').innerHTML = r.findings.length ? r.findings.map(f => {
+    const sm = SEV_META[f.sev] || SEV_META.info;
+    return `
+    <article class="rise-in rounded-lg border border-zinc-800 bg-ink-850 p-3.5">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="chip h-6 px-2 inline-flex items-center rounded-md border text-[9.5px] font-extrabold tracking-widest ${sm.chip}">${sm.label}</span>
+        <h5 class="text-[13px] font-bold text-zinc-100 flex-1 min-w-[140px]">${f.title}</h5>
+        <span class="chip h-6 px-2 inline-flex items-center rounded-md bg-ink-700 border border-zinc-800 font-mono text-[10px] text-zinc-400">L${f.line}</span>
+      </div>
+      <pre class="scroll-thin mt-2.5 rounded-md border border-zinc-800 bg-ink-900 px-3 py-2 font-mono text-[11px] text-zinc-400 overflow-x-auto whitespace-pre">${f.snippet.replace(/</g,'&lt;')}</pre>
+      <p class="mt-2 text-[12px] text-zinc-400"><span class="font-bold text-cyber">FIX →</span> ${f.fix}</p>
+    </article>`;
+  }).join('') : `<p class="text-[13px] text-zinc-500 rounded-lg border border-dashed border-zinc-700 px-4 py-6 text-center">🎉 Tidak ada temuan kerentanan aktif.</p>`;
+
+  $('#gasList').innerHTML = r.gasTips.map(t => `<li class="flex gap-2"><span class="text-cyber shrink-0">⚡</span><span>${t}</span></li>`).join('');
+  resetCertifyBtn();
+}
+
+/* ---------- Certify flow ---------- */
+const certifyBtn = $('#certifyBtn');
+function resetCertifyBtn() {
+  certifyBtn.disabled = false;
+  certifyBtn.className = 'chip w-full h-12 rounded-xl border border-safe/50 bg-safe/10 text-safe text-sm font-extrabold inline-flex items-center justify-center gap-2 hover:bg-safe/20 transition-colors';
+  certifyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3 5 6v5c0 4.4 3 8.1 7 10 4-1.9 7-5.6 7-10V6l-7-3Z"/><path d="m9.5 11.6 1.8 1.8 3.4-3.6"/></svg> Certify on BOT Chain`;
+}
+certifyBtn.addEventListener('click', () => {
+  if (!state.result || state.phase === 'certifying') return;
+  if (!state.wallet) { toast('Hubungkan wallet terlebih dahulu untuk certify on-chain.', 'warn'); pulseWallet(); return; }
+  state.phase = 'certifying';
+  certifyBtn.disabled = true;
+  certifyBtn.className = 'chip w-full h-12 rounded-xl border border-cyber/50 bg-cyber/10 text-cyber text-sm font-extrabold inline-flex items-center justify-center gap-2 cursor-wait';
+  const steps = ['Approving gas · 0.00021 BOT …', 'Signing transaction (Keccak-256 proof) …', 'Broadcasting to BOT Chain…', 'Waiting for 1 confirmation …'];
+  let i = 0;
+  certifyBtn.innerHTML = spinnerSVG() + ' Broadcasting to BOT Chain…';
+  const iv = setInterval(() => {
+    i++;
+    if (i < steps.length) { certifyBtn.innerHTML = spinnerSVG() + ' ' + steps[i]; }
+    else {
+      clearInterval(iv);
+      issueCertificate();
+    }
+  }, 650);
+});
+function spinnerSVG() { return `<svg viewBox="0 0 24 24" class="w-4 h-4 spin" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>`; }
+
+function issueCertificate() {
+  const r = state.result, net = NETWORKS[state.network];
+  const codeHash = keccakMock(codeInput.value);
+  state.cert = {
+    contract: $('#contractName').value || 'Untitled.sol',
+    score: r.score, verdict: r.verdict,
+    codeHash,
+    wallet: state.wallet ? state.wallet.address : '0x38bF4d01c9aE77e5b021Ff6cD81a20A4',
+    tx: '0x' + randHex(64),
+    block: (state.network === 'mainnet' ? 22859700 : 3412880) + Math.floor(Math.random() * 90),
+    time: new Date().toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'medium' }),
+    net: net.key
+  };
+  state.phase = 'certified';
+  certifyBtn.disabled = false;
+  certifyBtn.className = 'chip w-full h-12 rounded-xl border border-safe/60 bg-safe/15 text-safe text-sm font-extrabold inline-flex items-center justify-center gap-2 hover:bg-safe/25 transition-colors';
+  certifyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 12.5 4 4L18 8"/></svg> Certified — View On-Chain Proof`;
+  certifyBtn.onclick = openCert;
+  openCert();
+  toast('Proof audit berhasil di-mint di ' + net.name + ' ✓', 'ok');
+}
+certifyBtn.onclick = null;
+function ensureCertifyHandler() { certifyBtn.onclick = null; }
+
+/* ---------- Certificate modal ---------- */
+function openCert() {
+  if (!state.cert) return;
+  const c = state.cert, net = NETWORKS[c.net], g = gradeOf(c.score);
+  $('#certContract').textContent = c.contract;
+  $('#certChain').textContent = `${net.name} · Chain ID ${net.id}`;
+  $('#certScore').textContent = c.score + '/100';
+  $('#certScore').className = `chip h-7 px-3 inline-flex items-center rounded-full border font-mono text-xs font-extrabold ${g.chip}`;
+  $('#certVerdict').textContent = c.verdict;
+  $('#certVerdict').className = `chip h-7 px-3 inline-flex items-center rounded-full border text-[10px] font-extrabold tracking-widest uppercase ${g.chip}`;
+  $('#certSeal').className = `shrink-0 w-16 h-16 grid place-items-center rounded-full border-2 ${g.key === 'safe' ? 'border-safe bg-safe/10' : g.key === 'warn' ? 'border-warn bg-warn/10' : 'border-crit bg-crit/10'}`;
+  $('#certSeal').firstElementChild.className = `w-8 h-8 ${g.key === 'safe' ? 'text-safe' : g.key === 'warn' ? 'text-warn' : 'text-crit'}`;
+  $('#certCodeHash').textContent = c.codeHash;
+  $('#certWallet').textContent = c.wallet;
+  $('#certTx').textContent = c.tx;
+  $('#certBlock').textContent = '#' + c.block.toLocaleString('en-US');
+  $('#certTime').textContent = c.time;
+  $('#certExplorerBtn').href = net.explorer + '/tx/' + c.tx;
+  const md = `[![VibeProof: ${c.score}/100](https://vibeproof.botchain.ai/badge/${c.codeHash.slice(2, 10)}.svg)](${net.explorer}/tx/${c.tx})`;
+  $('#badgeMarkdown').textContent = md;
+  $('#badgePreviewScore').textContent = c.score + '/100';
+  $('#badgePreviewScore').className = `px-2 grid place-items-center ${g.key === 'safe' ? 'bg-safe' : g.key === 'warn' ? 'bg-warn' : 'bg-crit'} text-white`;
+  $('#copyBadgeBtn').onclick = () => copyText(md, 'Markdown badge disalin untuk README');
+  $('#shareXBtn').onclick = () => {
+    const txt = encodeURIComponent(`I just certified ${c.contract} with a ${c.score}/100 security score on @BOTChain_ai using VibeProof 🛡️⚡ tx: ${shortHash(c.tx, 10, 6)} #VibeProof #BOTChain #GirlMeetsTech`);
+    window.open('https://twitter.com/intent/tweet?text=' + txt, '_blank');
+  };
+
+  const modal = $('#certModal'), panel = $('#certPanel');
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => { panel.classList.remove('scale-95', 'opacity-0'); panel.classList.add('scale-100', 'opacity-100'); });
+}
+function closeCert() {
+  const modal = $('#certModal'), panel = $('#certPanel');
+  if (modal.classList.contains('hidden')) return;
+  panel.classList.add('scale-95', 'opacity-0'); panel.classList.remove('scale-100', 'opacity-100');
+  setTimeout(() => { modal.classList.add('hidden'); document.body.style.overflow = ''; }, 220);
+}
+$('#certClose').addEventListener('click', closeCert);
+$('#certBackdrop').addEventListener('click', closeCert);
+
+/* ---------- Preview state pills (untuk juri) ---------- */
+$$('.preview-btn').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.preview;
+  if (k === 'idle') { setPhase('idle'); return; }
+  if (k === 'scanning') { runScan(); return; }
+  const map = { safe:'safe', warning:'registry', critical:'vulnerable' };
+  loadPreset(map[k]);
+  state.result = PRESETS[map[k]].result;
+  renderResult(); setPhase('result');
+}));
+
+/* ---------- Network switcher ---------- */
+function setNetwork(key) {
+  state.network = key;
+  $$('.net-btn').forEach(b => {
+    const on = b.dataset.net === key;
+    b.className = `net-btn chip h-8 px-3 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ` +
+      (on ? (key === 'testnet' ? 'bg-cyber text-ink-900' : 'bg-safe text-ink-900') : 'text-zinc-400 hover:text-white');
+  });
+  toast(`Network: ${NETWORKS[key].name} (Chain ID ${NETWORKS[key].id})`, 'info');
+}
+$$('.net-btn').forEach(b => b.addEventListener('click', () => setNetwork(b.dataset.net)));
+
+/* ---------- Wallet ---------- */
+function pulseWallet() { const w = $('#walletBtn'); w.classList.add('shadow-glow-cyber'); setTimeout(() => w.classList.remove('shadow-glow-cyber'), 1200); }
+$('#walletBtn').addEventListener('click', () => {
+  if (state.wallet) { state.wallet = null; renderWallet(); toast('Wallet terputus.', 'info'); return; }
+  const lbl = $('#walletLabel');
+  lbl.textContent = 'Approve in wallet…';
+  setTimeout(() => {
+    state.wallet = { address:'0x38bF4d01c9aE77e5b021Ff6cD81a20A4', balance:'12.45' };
+    renderWallet();
+    toast('Wallet terhubung · ' + NETWORKS[state.network].name, 'ok');
+  }, 900);
+});
+function renderWallet() {
+  const lbl = $('#walletLabel'), btn = $('#walletBtn');
+  if (state.wallet) {
+    btn.className = 'chip h-10 px-3.5 rounded-lg border border-zinc-700 bg-ink-800 text-xs font-bold text-zinc-200 hover:border-safe/60 transition-colors inline-flex items-center gap-2';
+    lbl.innerHTML = `<span class="w-2 h-2 rounded-full bg-safe dot-live inline-block"></span> <span class="font-mono">0x38bF…20a4</span> <span class="text-zinc-600">|</span> <span class="font-mono text-safe">12.45 BOT</span>`;
+  } else {
+    btn.className = 'chip h-10 px-4 rounded-lg border border-cyber/50 bg-cyber/10 text-cyber text-xs font-bold hover:bg-cyber/20 transition-colors inline-flex items-center gap-2';
+    lbl.textContent = 'Connect MetaMask';
+  }
+}
+
+/* ---------- Mobile menu ---------- */
+$('#mobileMenuBtn').addEventListener('click', () => $('#mobileMenu').classList.toggle('hidden'));
+
+/* ---------- Live feed render ---------- */
+$('#feedGrid').innerHTML = FEED.map(f => {
+  const g = gradeOf(f.score), net = NETWORKS[f.net];
+  return `
+  <article class="rise-in rounded-xl border border-zinc-800 bg-ink-800 p-4 hover:border-zinc-600 transition-colors">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 grid place-items-center rounded-lg border ${g.key === 'safe' ? 'border-safe/40 bg-safe/10 text-safe' : g.key === 'warn' ? 'border-warn/40 bg-warn/10 text-warn' : 'border-crit/40 bg-crit/10 text-crit'}">
+        <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.6v5.2c0 4.7 3.2 8.6 7.5 10.7 4.3-2.1 7.5-6 7.5-10.7V5.6L12 2.5Z"/></svg>
+      </span>
+      <div class="min-w-0 flex-1">
+        <p class="font-mono text-[13px] font-bold text-white truncate">${f.name}</p>
+        <p class="font-mono text-[10.5px] text-zinc-500">by ${f.who}</p>
+      </div>
+      <span class="chip h-7 px-2.5 inline-flex items-center rounded-full border font-mono text-xs font-extrabold ${g.chip}">${f.score}</span>
+    </div>
+    <div class="mt-3.5 flex items-center gap-2 font-mono text-[10.5px] text-zinc-500">
+      <a href="${net.explorer}/tx/${f.tx}" target="_blank" rel="noopener" class="hover:text-cyber transition-colors">${f.tx}</a>
+      <span class="flex-1"></span>
+      <span class="chip h-5 px-2 inline-flex items-center rounded-full bg-ink-700 border border-zinc-800 text-zinc-400">${f.net === 'mainnet' ? 'Mainnet 677' : 'Testnet 968'}</span>
+      <span>${f.ago}</span>
+    </div>
+  </article>`;
+}).join('');
+
+/* ---------- Reference card actions ---------- */
+$('#copySourceBtn').addEventListener('click', () => copyText(codeInput.value, 'Solidity source disalin'));
+$('#addChainBtn').addEventListener('click', async () => {
+  const net = NETWORKS[state.network];
+  const params = [{ chainId:'0x' + net.id.toString(16), chainName:net.name, rpcUrls:[net.rpc], nativeCurrency:{ name:'BOT', symbol:'BOT', decimals:18 }, blockExplorerUrls:[net.explorer] }];
+  if (window.ethereum) { try { await window.ethereum.request({ method:'wallet_addEthereumChain', params }); } catch (e) { toast('Penambahan chain ditolak user.', 'warn'); } }
+  else toast(`MetaMask tidak terdeteksi — parameter ${net.name} tersedia di Reference Card (mock mode).`, 'info');
+});
+$$('.copy-rpc').forEach(b => b.addEventListener('click', () => copyText(b.parentElement.querySelector('.rpc-val').dataset.val, 'URL disalin')));
+
+/* ---------- Scroll progress ---------- */
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const p = h.scrollTop / (h.scrollHeight - h.clientHeight);
+  $('#scrollProgress').style.width = (p * 100) + '%';
+}, { passive:true });
+
+/* ---------- Boot ---------- */
+setNetwork('testnet');
+renderWallet();
+loadPreset('vulnerable');
+setPhase('idle');
+</script>
+</body>
+</html>

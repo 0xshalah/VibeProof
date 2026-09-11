@@ -1,52 +1,93 @@
-export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
-export type Verdict = 'SAFE' | 'WARNING' | 'CRITICAL';
-
-export interface VulnerabilityFinding {
-  id: string;
+export interface FindingItem {
+  id?: string;
+  sev: SeverityLevel;
   title: string;
-  severity: Severity;
   line: number;
-  description: string;
-  recommendation: string;
-  codeSnippet?: string;
-  category: 'REENTRANCY' | 'ACCESS_CONTROL' | 'ARITHMETIC' | 'GAS' | 'LOGIC' | 'STANDARDS';
+  snippet: string;
+  fix: string;
+  owaspId?: string;
+  cwe?: string;
+  category?: string;
 }
 
-export interface AuditResult {
-  codeHash: string;
-  projectName: string;
-  securityScore: number; // 0 - 100
-  verdict: Verdict;
+export interface AuditReportData {
+  score: number;
+  verdict: string;
+  scanTime: string;
+  counts: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    gas: number;
+  };
+  tags: string[];
   summary: string;
-  findings: VulnerabilityFinding[];
-  gasAnalysis: {
-    efficiencyScore: number;
-    tips: string[];
-  };
-  metrics: {
-    totalLines: number;
-    functionsCount: number;
-    modifiersCount: number;
-    criticalCount: number;
-    highCount: number;
-    mediumCount: number;
-    lowCount: number;
-  };
-  auditedAt: number;
+  findings: FindingItem[];
+  gasTips: string[];
+  owaspMatrix?: Record<string, 'PASS' | 'WARN' | 'FAIL'>;
 }
 
-export interface CertifiedOnChainRecord {
+export interface ContractPreset {
+  id: 'vulnerable' | 'registry' | 'safe';
+  file: string;
+  code: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  result: AuditReportData;
+}
+
+export interface CertifiedAuditData {
+  fileName: string;
+  score: number;
+  verdict: string;
   codeHash: string;
-  projectName: string;
-  securityScore: number;
-  verdict: Verdict;
-  reportSummary: string;
-  auditorWallet: string;
-  timestamp: number;
-  txHash?: string;
-  chainId?: number;
-  blockExplorerUrl?: string;
+  walletAddress: string;
+  txHash: string;
+  blockNumber: number;
+  timestamp: string;
+  network: 'testnet' | 'mainnet';
+}
+
+export interface CertifiedProof {
+  contract: string;
+  score: number;
+  verdict: string;
+  codeHash: string;
+  wallet: string;
+  tx: string;
+  block: number;
+  time: string;
+  net: 'testnet' | 'mainnet';
+}
+
+export interface AuditFeedItem {
+  name: string;
+  who: string;
+  score: number;
+  tx: string;
+  net: 'testnet' | 'mainnet';
+  ago: string;
+}
+
+export type LiveFeedItem = AuditFeedItem;
+
+export interface NetworkInfo {
+  key: 'testnet' | 'mainnet';
+  name: string;
+  id: number;
+  rpc: string;
+  explorer: string;
+  faucet: string;
+}
+
+export interface WalletAccount {
+  address: string;
+  balance: string;
+  isRealMetaMask?: boolean;
 }
 
 export interface NetworkConfig {
@@ -60,20 +101,8 @@ export interface NetworkConfig {
   isTestnet: boolean;
 }
 
-export interface WalletState {
-  isConnected: boolean;
-  address: string | null;
-  chainId: number | null;
-  botBalance: string | null;
-  isConnecting: boolean;
-  error: string | null;
-}
-
-export interface SampleContractPreset {
+export interface ToastMessage {
   id: string;
-  title: string;
-  subtitle: string;
-  badge: string;
-  badgeColor: 'emerald' | 'amber' | 'rose';
-  code: string;
+  message: string;
+  type: 'cyber' | 'safe' | 'warn' | 'crit';
 }
