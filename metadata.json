@@ -1,0 +1,6 @@
+{
+  "name": "VibeProof",
+  "description": "AI-powered smart contract auditor with verifiable on-chain audit certification on BOT Chain.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
